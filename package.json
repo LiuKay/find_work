@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "node scripts/build-site.js",
+    "dev": "node scripts/build-site.js && node scripts/serve-site.js"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
