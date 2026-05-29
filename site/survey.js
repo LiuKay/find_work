@@ -80,25 +80,27 @@
     }
   }
 
-  function selectedValues(name) {
-    return Array.from(form.querySelectorAll(`[name="${name}"]:checked`)).map((input) => input.value);
-  }
-
-  function selectedValue(name) {
-    const input = form.querySelector(`[name="${name}"]:checked`);
-    return input ? input.value : "";
-  }
-
-  function setSelectedValues(name, values) {
-    const selected = new Set(Array.isArray(values) ? values : []);
-    for (const input of form.querySelectorAll(`[name="${name}"]`)) {
-      input.checked = selected.has(input.value);
+  function renderSelectOptions() {
+    for (const select of form.querySelectorAll("[data-select-options]")) {
+      const values = OPTIONS[select.dataset.selectOptions] || [];
+      const firstLabel = select.dataset.optionalLabel || "请选择";
+      select.innerHTML = [
+        `<option value="">${escapeHtml(firstLabel)}</option>`,
+        ...values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`),
+      ].join("");
     }
   }
 
-  function setSelectedValue(name, value) {
-    for (const input of form.querySelectorAll(`[name="${name}"]`)) {
-      input.checked = input.value === value;
+  function selectedValues(names) {
+    const values = names
+      .map((name) => form.elements[name] && form.elements[name].value)
+      .filter(Boolean);
+    return Array.from(new Set(values));
+  }
+
+  function setSelectValue(name, value) {
+    if (form.elements[name]) {
+      form.elements[name].value = value || "";
     }
   }
 
@@ -108,11 +110,11 @@
       voterName: form.elements.voterName.value.trim(),
       inviteCode: form.elements.inviteCode.value,
       turnstileToken,
-      jobCategories: selectedValues("jobCategories"),
-      workModes: selectedValues("workModes"),
-      englishLevel: selectedValue("englishLevel"),
-      experienceLevels: selectedValues("experienceLevels"),
-      difficultyLevel: selectedValue("difficultyLevel"),
+      jobCategories: selectedValues(["primaryJobCategory", "secondaryJobCategory"]),
+      workModes: selectedValues(["workMode"]),
+      englishLevel: form.elements.englishLevel.value,
+      experienceLevels: selectedValues(["experienceLevel"]),
+      difficultyLevel: form.elements.difficultyLevel.value,
       otherKeywords: form.elements.otherKeywords.value.trim(),
     };
   }
@@ -132,11 +134,13 @@
   function applyResponse(response) {
     if (!response) return;
     form.elements.voterName.value = response.voterName || "";
-    setSelectedValues("jobCategories", response.jobCategories);
-    setSelectedValues("workModes", response.workModes);
-    setSelectedValue("englishLevel", response.englishLevel);
-    setSelectedValues("experienceLevels", response.experienceLevels);
-    setSelectedValue("difficultyLevel", response.difficultyLevel);
+    const jobCategories = Array.isArray(response.jobCategories) ? response.jobCategories : [];
+    setSelectValue("primaryJobCategory", jobCategories[0]);
+    setSelectValue("secondaryJobCategory", jobCategories[1]);
+    setSelectValue("workMode", Array.isArray(response.workModes) ? response.workModes[0] : "");
+    setSelectValue("englishLevel", response.englishLevel);
+    setSelectValue("experienceLevel", Array.isArray(response.experienceLevels) ? response.experienceLevels[0] : "");
+    setSelectValue("difficultyLevel", response.difficultyLevel);
     form.elements.otherKeywords.value = response.otherKeywords || "";
   }
 
@@ -164,7 +168,13 @@
   function initTurnstile() {
     const siteKey = form.dataset.turnstileSiteKey;
     if (!siteKey) {
-      showStatus("问卷需要配置 TURNSTILE_SITE_KEY 后才能提交。", "error");
+      const isLocalPreview = ["127.0.0.1", "localhost"].includes(window.location.hostname);
+      showStatus(
+        isLocalPreview
+          ? "本地预览已跳过人机验证；线上页面会显示 Cloudflare 验证后再提交。"
+          : "问卷需要配置 TURNSTILE_SITE_KEY 后才能提交。",
+        isLocalPreview ? "info" : "error"
+      );
       submitButton.disabled = true;
       return;
     }
@@ -240,6 +250,7 @@
   });
 
   renderOptions();
+  renderSelectOptions();
   loadExistingResponse();
   window.addEventListener("load", initTurnstile);
 })();

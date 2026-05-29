@@ -460,40 +460,54 @@ function renderSurvey() {
     <form class="survey-form" data-survey-form data-turnstile-site-key="${escapeHtml(TURNSTILE_SITE_KEY)}">
       <div class="form-section">
         <h2 id="survey-form-title">你的基本信息</h2>
-        <label class="field">
-          <span>昵称</span>
-          <input type="text" name="voterName" maxlength="40" required autocomplete="nickname" placeholder="方便我知道是谁投的">
-        </label>
-        <label class="field">
-          <span>邀请码</span>
-          <input type="password" name="inviteCode" maxlength="80" required autocomplete="off" placeholder="我分享给你的口令">
-        </label>
+        <div class="form-row">
+          <label class="field">
+            <span>昵称</span>
+            <input type="text" name="voterName" maxlength="40" required autocomplete="nickname" placeholder="方便我知道是谁投的">
+          </label>
+          <label class="field">
+            <span>邀请码</span>
+            <input type="password" name="inviteCode" maxlength="80" required autocomplete="off" placeholder="我分享给你的口令">
+          </label>
+        </div>
       </div>
       <div class="form-section">
-        <h2>岗位方向</h2>
-        <div class="option-grid" data-options="jobCategories"></div>
+        <h2>主要偏好</h2>
+        <div class="form-row">
+          <label class="field">
+            <span>最想看的岗位方向</span>
+            <select name="primaryJobCategory" required data-select-options="jobCategories"></select>
+          </label>
+          <label class="field">
+            <span>第二选择</span>
+            <select name="secondaryJobCategory" data-select-options="jobCategories" data-optional-label="暂时没有"></select>
+          </label>
+        </div>
+        <div class="form-row three-columns">
+          <label class="field">
+            <span>工作方式</span>
+            <select name="workMode" required data-select-options="workModes"></select>
+          </label>
+          <label class="field">
+            <span>英文要求</span>
+            <select name="englishLevel" required data-select-options="englishLevel"></select>
+          </label>
+          <label class="field">
+            <span>申请门槛</span>
+            <select name="difficultyLevel" required data-select-options="difficultyLevel"></select>
+          </label>
+        </div>
+      </div>
+      <div class="form-section">
+        <h2>补充信息</h2>
+        <label class="field">
+          <span>经验阶段</span>
+          <select name="experienceLevel" required data-select-options="experienceLevels"></select>
+        </label>
         <label class="field">
           <span>其他方向 / 关键词</span>
           <textarea name="otherKeywords" maxlength="600" rows="4" placeholder="比如：日语客服、游戏本地化、跨境电商运营"></textarea>
         </label>
-      </div>
-      <div class="form-section">
-        <h2>工作方式</h2>
-        <div class="option-grid compact" data-options="workModes"></div>
-      </div>
-      <div class="form-section split-fields">
-        <fieldset>
-          <legend>英文要求</legend>
-          <div class="option-stack" data-options="englishLevel"></div>
-        </fieldset>
-        <fieldset>
-          <legend>申请门槛</legend>
-          <div class="option-stack" data-options="difficultyLevel"></div>
-        </fieldset>
-      </div>
-      <div class="form-section">
-        <h2>经验阶段</h2>
-        <div class="option-grid compact" data-options="experienceLevels"></div>
       </div>
       <div class="turnstile-box" data-turnstile-box></div>
       <div class="form-actions">
