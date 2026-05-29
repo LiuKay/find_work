@@ -1,4 +1,4 @@
 interface:
   display_name: "Daily Job Picks"
-  short_description: "Curate group-friendly China-applicable job picks"
-  default_prompt: "Use $daily-job-picks to create today’s public multi-category foreign-company and overseas remote job roundup for China-based applicants."
+  short_description: "Curate verified China-applicable job picks"
+  default_prompt: "Use $daily-job-picks to create today’s public multi-category foreign-company and overseas remote job roundup for China-based applicants, using parallel search when available and only keeping reader-accessible job links."
