@@ -5,6 +5,7 @@ const ROOT = path.resolve(__dirname, "..");
 const PICKS_DIR = path.join(ROOT, "job-picks");
 const DIST_DIR = path.join(ROOT, "dist");
 const SITE_DIR = path.join(ROOT, "site");
+const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || "";
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -282,6 +283,7 @@ function pageTemplate({ title, description, body, canonicalPath = "/", scripts =
     <nav class="site-nav" aria-label="主导航">
       <a href="/">最新</a>
       <a href="/archive/">归档</a>
+      <a href="/survey/">问卷</a>
     </nav>
   </header>
   ${body}
@@ -442,10 +444,141 @@ function renderArchive(picks) {
   });
 }
 
+function renderSurvey() {
+  return pageTemplate({
+    title: "岗位需求问卷 | Find Work",
+    description: "收集朋友们的岗位方向、远程方式、英文要求和经验阶段偏好。",
+    canonicalPath: "/survey/",
+    body: `<main class="survey-layout">
+  <section class="survey-hero">
+    <div class="section-kicker">Survey</div>
+    <h1>岗位需求问卷</h1>
+    <p>告诉我你现在最想看的岗位类型。每个人保留一份问卷，同一浏览器再次提交会更新之前的选择。</p>
+  </section>
+  <section class="survey-panel" aria-labelledby="survey-form-title">
+    <div class="survey-status" data-survey-status hidden></div>
+    <form class="survey-form" data-survey-form data-turnstile-site-key="${escapeHtml(TURNSTILE_SITE_KEY)}">
+      <div class="form-section">
+        <h2 id="survey-form-title">你的基本信息</h2>
+        <label class="field">
+          <span>昵称</span>
+          <input type="text" name="voterName" maxlength="40" required autocomplete="nickname" placeholder="方便我知道是谁投的">
+        </label>
+        <label class="field">
+          <span>邀请码</span>
+          <input type="password" name="inviteCode" maxlength="80" required autocomplete="off" placeholder="我分享给你的口令">
+        </label>
+      </div>
+      <div class="form-section">
+        <h2>岗位方向</h2>
+        <div class="option-grid" data-options="jobCategories"></div>
+        <label class="field">
+          <span>其他方向 / 关键词</span>
+          <textarea name="otherKeywords" maxlength="600" rows="4" placeholder="比如：日语客服、游戏本地化、跨境电商运营"></textarea>
+        </label>
+      </div>
+      <div class="form-section">
+        <h2>工作方式</h2>
+        <div class="option-grid compact" data-options="workModes"></div>
+      </div>
+      <div class="form-section split-fields">
+        <fieldset>
+          <legend>英文要求</legend>
+          <div class="option-stack" data-options="englishLevel"></div>
+        </fieldset>
+        <fieldset>
+          <legend>申请门槛</legend>
+          <div class="option-stack" data-options="difficultyLevel"></div>
+        </fieldset>
+      </div>
+      <div class="form-section">
+        <h2>经验阶段</h2>
+        <div class="option-grid compact" data-options="experienceLevels"></div>
+      </div>
+      <div class="turnstile-box" data-turnstile-box></div>
+      <div class="form-actions">
+        <button type="submit" data-submit-survey>提交问卷</button>
+      </div>
+    </form>
+  </section>
+</main>`,
+    scripts: [
+      "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit",
+      "/assets/survey.js",
+    ],
+  });
+}
+
+function renderSurveyAdmin() {
+  return pageTemplate({
+    title: "问卷统计 | Find Work",
+    description: "查看岗位需求问卷的私有统计结果。",
+    canonicalPath: "/survey-admin/",
+    body: `<main class="survey-layout admin-layout">
+  <section class="survey-hero">
+    <div class="section-kicker">Admin</div>
+    <h1>问卷统计</h1>
+    <p>输入管理密码查看聚合结果。这个页面不会公开显示给朋友。</p>
+  </section>
+  <section class="survey-panel">
+    <form class="admin-login" data-admin-form>
+      <label class="field">
+        <span>管理密码</span>
+        <input type="password" name="adminPassword" required autocomplete="current-password">
+      </label>
+      <button type="submit">查看统计</button>
+    </form>
+    <div class="survey-status" data-admin-status hidden></div>
+    <div class="stats-dashboard" data-stats-dashboard hidden>
+      <div class="stats-summary">
+        <div>
+          <strong data-total-responses>0</strong>
+          <span>有效问卷</span>
+        </div>
+        <div>
+          <strong data-last-updated>暂无</strong>
+          <span>最近更新</span>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <section class="stats-card">
+          <h2>岗位方向</h2>
+          <div data-chart="jobCategories"></div>
+        </section>
+        <section class="stats-card">
+          <h2>工作方式</h2>
+          <div data-chart="workModes"></div>
+        </section>
+        <section class="stats-card">
+          <h2>英文要求</h2>
+          <div data-chart="englishLevel"></div>
+        </section>
+        <section class="stats-card">
+          <h2>经验阶段</h2>
+          <div data-chart="experienceLevels"></div>
+        </section>
+        <section class="stats-card">
+          <h2>申请门槛</h2>
+          <div data-chart="difficultyLevel"></div>
+        </section>
+        <section class="stats-card keywords-card">
+          <h2>补充关键词</h2>
+          <div data-keywords></div>
+        </section>
+      </div>
+    </div>
+  </section>
+</main>`,
+    scripts: ["/assets/survey-admin.js"],
+  });
+}
+
 function copyAssets() {
   ensureDir(path.join(DIST_DIR, "assets"));
   fs.copyFileSync(path.join(SITE_DIR, "styles.css"), path.join(DIST_DIR, "assets", "styles.css"));
   fs.copyFileSync(path.join(SITE_DIR, "archive.js"), path.join(DIST_DIR, "assets", "archive.js"));
+  fs.copyFileSync(path.join(SITE_DIR, "survey.js"), path.join(DIST_DIR, "assets", "survey.js"));
+  fs.copyFileSync(path.join(SITE_DIR, "survey-admin.js"), path.join(DIST_DIR, "assets", "survey-admin.js"));
 }
 
 function main() {
@@ -456,6 +589,8 @@ function main() {
   const jobs = picks.flatMap(extractJobs);
   writePage("index.html", renderIndex(picks));
   writePage(path.join("archive", "index.html"), renderArchive(picks));
+  writePage(path.join("survey", "index.html"), renderSurvey());
+  writePage(path.join("survey-admin", "index.html"), renderSurveyAdmin());
   fs.writeFileSync(path.join(DIST_DIR, "assets", "jobs.json"), `${JSON.stringify(jobs, null, 2)}\n`);
 
   for (const pick of picks) {
@@ -466,6 +601,10 @@ function main() {
   fs.writeFileSync(
     path.join(DIST_DIR, "_headers"),
     "/*\n  X-Robots-Tag: noindex, nofollow\n  X-Content-Type-Options: nosniff\n"
+  );
+  fs.writeFileSync(
+    path.join(DIST_DIR, "_routes.json"),
+    `${JSON.stringify({ version: 1, include: ["/api/*"], exclude: [] }, null, 2)}\n`
   );
 
   console.log(`Built ${picks.length} job pick page(s) and ${jobs.length} job record(s) into dist/`);

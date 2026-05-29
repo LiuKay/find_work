@@ -1,0 +1,245 @@
+(function () {
+  const OPTIONS = {
+    jobCategories: [
+      "客服",
+      "客户成功",
+      "本地化",
+      "AI Trainer / 数据标注",
+      "内容 / 新媒体",
+      "产品经理",
+      "需求分析 / 系统分析",
+      "项目经理",
+      "技术 / 开发",
+      "QA / 测试",
+      "数据分析",
+      "销售 / BD",
+      "市场 / 增长",
+      "医药 / 临床",
+      "科研 / 教育",
+      "运营",
+      "其他",
+    ],
+    workModes: ["全球远程", "APAC 远程", "中国远程", "中国本地办公", "都可以"],
+    englishLevel: ["尽量低英文", "能读写英文", "能英文会议沟通", "都可以"],
+    experienceLevels: ["入门", "1-3 年", "3-5 年", "高级", "都可以"],
+    difficultyLevel: ["低门槛优先", "中等门槛可以", "高门槛也可以", "都可以"],
+  };
+
+  const form = document.querySelector("[data-survey-form]");
+  const status = document.querySelector("[data-survey-status]");
+  const turnstileBox = document.querySelector("[data-turnstile-box]");
+  const submitButton = document.querySelector("[data-submit-survey]");
+
+  if (!form || !status || !submitButton) return;
+
+  const voterKey = "fwSurveyVoterId";
+  const nameKey = "fwSurveyVoterName";
+  let turnstileToken = "";
+  let turnstileWidgetId = null;
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function showStatus(message, type) {
+    status.hidden = false;
+    status.textContent = message;
+    status.dataset.statusType = type || "info";
+  }
+
+  function getVoterId() {
+    const existing = window.localStorage.getItem(voterKey);
+    if (existing) return existing;
+
+    const id =
+      window.crypto && window.crypto.randomUUID
+        ? window.crypto.randomUUID()
+        : `voter-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    window.localStorage.setItem(voterKey, id);
+    return id;
+  }
+
+  function renderOptions() {
+    for (const [name, values] of Object.entries(OPTIONS)) {
+      const container = document.querySelector(`[data-options="${name}"]`);
+      if (!container) continue;
+      const type = name === "englishLevel" || name === "difficultyLevel" ? "radio" : "checkbox";
+
+      container.innerHTML = values
+        .map(
+          (value, index) => `<label class="choice">
+            <input type="${type}" name="${escapeHtml(name)}" value="${escapeHtml(value)}"${type === "radio" && index === 0 ? " required" : ""}>
+            <span>${escapeHtml(value)}</span>
+          </label>`
+        )
+        .join("");
+    }
+  }
+
+  function selectedValues(name) {
+    return Array.from(form.querySelectorAll(`[name="${name}"]:checked`)).map((input) => input.value);
+  }
+
+  function selectedValue(name) {
+    const input = form.querySelector(`[name="${name}"]:checked`);
+    return input ? input.value : "";
+  }
+
+  function setSelectedValues(name, values) {
+    const selected = new Set(Array.isArray(values) ? values : []);
+    for (const input of form.querySelectorAll(`[name="${name}"]`)) {
+      input.checked = selected.has(input.value);
+    }
+  }
+
+  function setSelectedValue(name, value) {
+    for (const input of form.querySelectorAll(`[name="${name}"]`)) {
+      input.checked = input.value === value;
+    }
+  }
+
+  function buildPayload() {
+    return {
+      voterId: getVoterId(),
+      voterName: form.elements.voterName.value.trim(),
+      inviteCode: form.elements.inviteCode.value,
+      turnstileToken,
+      jobCategories: selectedValues("jobCategories"),
+      workModes: selectedValues("workModes"),
+      englishLevel: selectedValue("englishLevel"),
+      experienceLevels: selectedValues("experienceLevels"),
+      difficultyLevel: selectedValue("difficultyLevel"),
+      otherKeywords: form.elements.otherKeywords.value.trim(),
+    };
+  }
+
+  function validatePayload(payload) {
+    if (!payload.voterName) return "请填写昵称。";
+    if (!payload.inviteCode) return "请填写邀请码。";
+    if (!payload.jobCategories.length) return "请选择至少一个岗位方向。";
+    if (!payload.workModes.length) return "请选择至少一种工作方式。";
+    if (!payload.englishLevel) return "请选择英文要求。";
+    if (!payload.experienceLevels.length) return "请选择至少一个经验阶段。";
+    if (!payload.difficultyLevel) return "请选择申请门槛。";
+    if (!payload.turnstileToken) return "请完成人机验证。";
+    return "";
+  }
+
+  function applyResponse(response) {
+    if (!response) return;
+    form.elements.voterName.value = response.voterName || "";
+    setSelectedValues("jobCategories", response.jobCategories);
+    setSelectedValues("workModes", response.workModes);
+    setSelectedValue("englishLevel", response.englishLevel);
+    setSelectedValues("experienceLevels", response.experienceLevels);
+    setSelectedValue("difficultyLevel", response.difficultyLevel);
+    form.elements.otherKeywords.value = response.otherKeywords || "";
+  }
+
+  function renderCurrentSelection(payload) {
+    const summary = [
+      ["岗位方向", payload.jobCategories.join(" / ")],
+      ["工作方式", payload.workModes.join(" / ")],
+      ["英文要求", payload.englishLevel],
+      ["经验阶段", payload.experienceLevels.join(" / ")],
+      ["申请门槛", payload.difficultyLevel],
+      ["补充关键词", payload.otherKeywords || "无"],
+    ]
+      .map(([label, value]) => `${label}：${value}`)
+      .join("；");
+    showStatus(`已保存。你当前的选择是：${summary}`, "success");
+  }
+
+  function resetTurnstile() {
+    turnstileToken = "";
+    if (window.turnstile && turnstileWidgetId !== null) {
+      window.turnstile.reset(turnstileWidgetId);
+    }
+  }
+
+  function initTurnstile() {
+    const siteKey = form.dataset.turnstileSiteKey;
+    if (!siteKey) {
+      showStatus("问卷需要配置 TURNSTILE_SITE_KEY 后才能提交。", "error");
+      submitButton.disabled = true;
+      return;
+    }
+
+    if (!window.turnstile || !turnstileBox) {
+      showStatus("人机验证加载失败，请刷新页面重试。", "error");
+      submitButton.disabled = true;
+      return;
+    }
+
+    turnstileWidgetId = window.turnstile.render(turnstileBox, {
+      sitekey: siteKey,
+      callback(token) {
+        turnstileToken = token;
+      },
+      "expired-callback"() {
+        turnstileToken = "";
+      },
+      "error-callback"() {
+        turnstileToken = "";
+        showStatus("人机验证失败，请刷新后重试。", "error");
+      },
+    });
+  }
+
+  async function loadExistingResponse() {
+    const voterId = getVoterId();
+    const savedName = window.localStorage.getItem(nameKey);
+    if (savedName) form.elements.voterName.value = savedName;
+
+    try {
+      const response = await fetch(`/api/survey?voterId=${encodeURIComponent(voterId)}`);
+      if (response.status === 404) return;
+      if (!response.ok) throw new Error("load failed");
+      const data = await response.json();
+      applyResponse(data.response);
+      if (data.response) showStatus("已载入你之前提交的问卷，可以直接修改后重新提交。", "info");
+    } catch (error) {
+      showStatus("暂时无法读取已提交问卷；你仍然可以填写并提交。", "info");
+    }
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const payload = buildPayload();
+    const validationError = validatePayload(payload);
+    if (validationError) {
+      showStatus(validationError, "error");
+      return;
+    }
+
+    submitButton.disabled = true;
+    showStatus("正在提交...", "info");
+
+    try {
+      const response = await fetch("/api/survey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "提交失败");
+
+      window.localStorage.setItem(nameKey, payload.voterName);
+      renderCurrentSelection(payload);
+      resetTurnstile();
+    } catch (error) {
+      showStatus(error.message || "提交失败，请稍后重试。", "error");
+      resetTurnstile();
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+
+  renderOptions();
+  loadExistingResponse();
+  window.addEventListener("load", initTurnstile);
+})();
