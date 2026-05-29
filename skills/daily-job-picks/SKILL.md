@@ -16,6 +16,8 @@ Do not assume a personal default job profile. In targeted mode, the user must pr
 - Write public daily roundups to `/Users/kaybee/Documents/github/find_work/job-picks/YYYY-MM-DD.md`.
 - Write targeted runs to `/Users/kaybee/Documents/github/find_work/job-picks/YYYY-MM-DD-<topic>.md`, where `<topic>` is a short hyphen-case or Chinese-safe label from the requested role or industry.
 - Create `/Users/kaybee/Documents/github/find_work/job-picks/` if it does not exist.
+- New public roundup files must use the top-level title `# YYYY-MM-DD 外企/海外远程岗位精选`.
+- New targeted files must use a distinct top-level title, preferably `# YYYY-MM-DD <目标岗位/方向> 岗位专选`, so multiple runs on the same day are distinguishable in file lists and previews.
 - If writing to an existing date file, append a new `## <run label>` section under the existing date file instead of repeating the top-level `# YYYY-MM-DD ...` title. Use labels such as `默认公共精选`, `低英文门槛精选`, or the user's requested role/topic.
 - Maintain `/Users/kaybee/Documents/github/find_work/job-picks/seen-jobs.tsv` as a lightweight deduplication index with columns: `date`, `title`, `company`, `url`, `job_direction`, `source`.
 - Before selecting jobs, scan both `seen-jobs.tsv` and existing Markdown files in `/Users/kaybee/Documents/github/find_work/job-picks/` and exclude any job whose company plus title or job URL already appeared.
@@ -57,7 +59,7 @@ These scripts do not decide whether a job is good or China-applicable. The agent
 10. For Greenhouse, Lever, Ashby, Workable, SmartRecruiters, and company career URLs, run `scripts/ats_extract.py <url>` when shell network access is available. Use extracted title/company/location as a consistency check; if it disagrees with the candidate, open the page and resolve the mismatch before proceeding.
 11. **MANDATORY link check — do not skip, do not proceed to step 12 until complete.** Run `scripts/link_check.py --url <url> --title <title> --company <company>` for every finalist URL one by one. Any URL that returns `"ok_basic": false`, an HTTP error, or a bad-page marker must be dropped and replaced before continuing. After the script passes, also open each finalist URL directly and run the final reader-usability pass from `references/search-and-screening.md`; replace or reject any job whose link cannot be verified. Record every dropped link via `scripts/bad_links.py append` before searching for a replacement. This verification is internal; do not include a `链接核验` field or mention scraping, crawling, rendering, parser behavior, ATS quirks, or verification mechanics in the public output.
 12. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 11 may appear here.
-13. Run `scripts/format_daily_picks.py --input <final-jobs.json> ...` to validate required fields and render Markdown. Fix any validation errors before writing final output.
+13. Run `scripts/format_daily_picks.py --input <final-jobs.json> ...` to validate required fields and render Markdown. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Fix any validation errors before writing final output.
 14. Save or append the rendered Markdown to the appropriate file, then run `scripts/validate_report.py <report.md> --check-links` whenever shell network access is available. Fix validation errors before responding. If shell network is unavailable, run `scripts/link_check.py` on every final URL separately as soon as access is available; do not rely on Markdown-only validation.
 15. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. Also provide the same content in the response unless the user only asked to save it.
 
@@ -81,6 +83,11 @@ Output style rules:
 - Do not mention scraping/crawling/search mechanics, parser behavior, login-less environments, structured fields, link verification, or page-rendering limitations in `注意事项` or any public-facing text.
 - If eligibility or employment structure is unclear, describe only the applicant-facing uncertainty, such as `投递前确认是否支持中国大陆远程签约、税务和合同形式`.
 - Infer `岗位方向` from the job title and JD responsibilities, not just from broad skill defaults. Use `其他` only when no more specific label fits after reading the JD.
+
+Top-level title rules:
+
+- Public roundup mode: `# YYYY-MM-DD 外企/海外远程岗位精选`
+- Targeted mode: `# YYYY-MM-DD <目标岗位/方向> 岗位专选`
 
 ```markdown
 # YYYY-MM-DD 外企/海外远程岗位精选

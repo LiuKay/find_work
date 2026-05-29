@@ -69,13 +69,31 @@ def line(label: str, value: Any) -> str:
     return f"{label}：{str(value).strip()}"
 
 
-def render(date: str, mode: str, target: str, industry: str, jobs: list[dict[str, Any]], section: str = "") -> str:
+def default_title(date: str, mode: str, target: str) -> str:
+    normalized_mode = mode.strip()
+    normalized_target = target.strip()
+    if normalized_mode == "定向精选":
+        if normalized_target and normalized_target != "多岗位方向":
+            return f"# {date} {normalized_target} 岗位专选"
+        return f"# {date} 定向岗位专选"
+    return f"# {date} 外企/海外远程岗位精选"
+
+
+def render(
+    date: str,
+    mode: str,
+    target: str,
+    industry: str,
+    jobs: list[dict[str, Any]],
+    section: str = "",
+    title: str = "",
+) -> str:
     lines: list[str] = []
     if section:
         lines.append(f"## {section}")
         lines.append("")
     else:
-        lines.append(f"# {date} 外企/海外远程岗位精选")
+        lines.append(title.strip() or default_title(date, mode, target))
         lines.append("")
     lines.extend(
         [
@@ -119,6 +137,7 @@ def main() -> int:
     parser.add_argument("--target", default="多岗位方向")
     parser.add_argument("--industry", default="外企中国岗位 / APAC / 海外远程")
     parser.add_argument("--section", default="", help="section heading when appending to an existing date file")
+    parser.add_argument("--title", default="", help="top-level title for a new report file")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--append", action="store_true")
     args = parser.parse_args()
@@ -131,7 +150,7 @@ def main() -> int:
         print(json.dumps({"valid": False, "errors": errors}, ensure_ascii=False, indent=2))
         return 1
 
-    markdown = render(args.date, args.mode, args.target, args.industry, jobs, args.section)
+    markdown = render(args.date, args.mode, args.target, args.industry, jobs, args.section, args.title)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         if args.append and args.output.exists():
