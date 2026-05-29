@@ -42,6 +42,12 @@ function inlineMarkdown(value) {
   return output;
 }
 
+function slugifyHeading(value) {
+  const jobMatch = value.match(/^(\d+)\.\s*岗位名称[：:]/);
+  if (jobMatch) return `job-${jobMatch[1]}`;
+  return "";
+}
+
 function markdownToHtml(markdown) {
   const lines = markdown.replace(/\r\n/g, "\n").split("\n");
   const html = [];
@@ -94,7 +100,9 @@ function markdownToHtml(markdown) {
       closeParagraph();
       closeList();
       const level = heading[1].length;
-      html.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+      const id = slugifyHeading(heading[2]);
+      const idAttribute = id ? ` id="${escapeHtml(id)}"` : "";
+      html.push(`<h${level}${idAttribute}>${inlineMarkdown(heading[2])}</h${level}>`);
       continue;
     }
 
@@ -122,6 +130,104 @@ function markdownToHtml(markdown) {
   return html.join("\n");
 }
 
+function plainMarkdown(value) {
+  return (value || "")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1 $2")
+    .replace(/[*_`]/g, "")
+    .trim();
+}
+
+function extractMarkdownUrl(value) {
+  const markdownLink = (value || "").match(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/);
+  if (markdownLink) return markdownLink[1];
+  const bareUrl = (value || "").match(/https?:\/\/\S+/);
+  return bareUrl ? bareUrl[0] : "";
+}
+
+function parseJobBlock(block, pick, index) {
+  const heading = block.heading.trim();
+  const titleMatch = heading.match(/岗位名称[：:]\s*(.+)$/);
+  const fields = {};
+
+  for (const line of block.lines) {
+    const match = line.match(/^([^：:]+)[：:]\s*(.*)$/);
+    if (!match) continue;
+    fields[match[1].trim()] = match[2].trim();
+  }
+
+  const title = titleMatch ? titleMatch[1].trim() : heading.replace(/^\d+\.\s*/, "");
+  const company = plainMarkdown(fields["公司 / 平台"] || "");
+  const direction = plainMarkdown(fields["岗位方向"] || "");
+  const workMode = plainMarkdown(fields["工作方式"] || "");
+  const experience = plainMarkdown(fields["经验要求"] || "");
+  const language = plainMarkdown(fields["语言要求"] || "");
+  const confidence = plainMarkdown(fields["中国可投把握"] || "");
+  const threshold = plainMarkdown(fields["申请门槛"] || "");
+  const fit = plainMarkdown(fields["适合谁"] || "");
+  const notes = plainMarkdown(fields["注意事项"] || "");
+  const link = extractMarkdownUrl(fields["链接"] || "");
+
+  return {
+    id: `${pick.slug}-${index + 1}`,
+    issueSlug: pick.slug,
+    issueTitle: pick.title,
+    issueUrl: `/picks/${pick.slug}/#job-${index + 1}`,
+    date: pick.date,
+    number: index + 1,
+    title,
+    company,
+    direction,
+    workMode,
+    experience,
+    language,
+    confidence,
+    threshold,
+    fit,
+    notes,
+    link,
+    searchText: [
+      pick.date,
+      pick.title,
+      title,
+      company,
+      direction,
+      workMode,
+      experience,
+      language,
+      confidence,
+      threshold,
+      fit,
+      notes,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase(),
+  };
+}
+
+function extractJobs(pick) {
+  const lines = pick.markdown.replace(/\r\n/g, "\n").split("\n");
+  const blocks = [];
+  let current = null;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    const heading = line.match(/^###\s+\d+\.\s+岗位名称[：:]\s*(.+)$/);
+    if (heading) {
+      if (current) blocks.push(current);
+      current = { heading: line.replace(/^###\s+/, ""), lines: [] };
+      continue;
+    }
+
+    if (current) {
+      current.lines.push(line);
+    }
+  }
+
+  if (current) blocks.push(current);
+  return blocks.map((block, index) => parseJobBlock(block, pick, index));
+}
+
 function getPickFiles() {
   if (!fs.existsSync(PICKS_DIR)) return [];
   return fs
@@ -147,7 +253,11 @@ function readPick(file) {
   };
 }
 
-function pageTemplate({ title, description, body, canonicalPath = "/" }) {
+function pageTemplate({ title, description, body, canonicalPath = "/", scripts = [] }) {
+  const scriptTags = scripts
+    .map((script) => `<script src="${escapeHtml(script)}" defer></script>`)
+    .join("\n  ");
+
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -158,6 +268,7 @@ function pageTemplate({ title, description, body, canonicalPath = "/" }) {
   <title>${escapeHtml(title)}</title>
   <link rel="stylesheet" href="/assets/styles.css">
   <link rel="canonical" href="${escapeHtml(canonicalPath)}">
+  ${scriptTags}
 </head>
 <body>
   <header class="site-header">
@@ -260,14 +371,81 @@ function renderArchive(picks) {
     body: `<main class="archive-layout">
   <div class="section-kicker">All Issues</div>
   <h1>岗位精选归档</h1>
+  <section class="job-filter" aria-labelledby="job-filter-title">
+    <div class="filter-heading">
+      <div>
+        <h2 id="job-filter-title">岗位筛选</h2>
+        <p>按发布时间和岗位关键词检索历史发布记录。</p>
+      </div>
+      <span class="job-count" data-job-count>读取中</span>
+    </div>
+    <form class="filter-controls" data-job-filter>
+      <label>
+        <span>关键词</span>
+        <input type="search" name="query" placeholder="岗位、公司、方向" autocomplete="off">
+      </label>
+      <label>
+        <span>开始日期</span>
+        <input type="date" name="startDate">
+      </label>
+      <label>
+        <span>结束日期</span>
+        <input type="date" name="endDate">
+      </label>
+      <label>
+        <span>英文要求</span>
+        <select name="language" data-filter-options="language">
+          <option value="">不限</option>
+        </select>
+      </label>
+      <label>
+        <span>工作方式</span>
+        <select name="workMode" data-filter-options="workMode">
+          <option value="">不限</option>
+        </select>
+      </label>
+      <label>
+        <span>申请门槛</span>
+        <select name="threshold" data-filter-options="threshold">
+          <option value="">不限</option>
+        </select>
+      </label>
+      <label>
+        <span>可投把握</span>
+        <select name="confidence" data-filter-options="confidence">
+          <option value="">不限</option>
+        </select>
+      </label>
+      <label>
+        <span>经验要求</span>
+        <select name="experience" data-filter-options="experience">
+          <option value="">不限</option>
+        </select>
+      </label>
+      <label>
+        <span>岗位方向</span>
+        <select name="direction" data-filter-options="direction">
+          <option value="">不限</option>
+        </select>
+      </label>
+      <button type="reset">清空</button>
+    </form>
+    <div class="job-results" data-job-results aria-live="polite"></div>
+    <p class="filter-empty" data-job-empty hidden>没有匹配的岗位，试试放宽日期或关键词。</p>
+  </section>
+  <section class="issue-archive" aria-labelledby="issue-archive-title">
+  <h2 id="issue-archive-title">每日归档</h2>
   <ol class="full-archive-list">${items}</ol>
+  </section>
 </main>`,
+    scripts: [`/assets/archive.js`],
   });
 }
 
 function copyAssets() {
   ensureDir(path.join(DIST_DIR, "assets"));
   fs.copyFileSync(path.join(SITE_DIR, "styles.css"), path.join(DIST_DIR, "assets", "styles.css"));
+  fs.copyFileSync(path.join(SITE_DIR, "archive.js"), path.join(DIST_DIR, "assets", "archive.js"));
 }
 
 function main() {
@@ -275,8 +453,10 @@ function main() {
   copyAssets();
 
   const picks = getPickFiles().map(readPick);
+  const jobs = picks.flatMap(extractJobs);
   writePage("index.html", renderIndex(picks));
   writePage(path.join("archive", "index.html"), renderArchive(picks));
+  fs.writeFileSync(path.join(DIST_DIR, "assets", "jobs.json"), `${JSON.stringify(jobs, null, 2)}\n`);
 
   for (const pick of picks) {
     writePage(path.join("picks", pick.slug, "index.html"), renderPickPage(pick));
@@ -288,7 +468,7 @@ function main() {
     "/*\n  X-Robots-Tag: noindex, nofollow\n  X-Content-Type-Options: nosniff\n"
   );
 
-  console.log(`Built ${picks.length} job pick page(s) into dist/`);
+  console.log(`Built ${picks.length} job pick page(s) and ${jobs.length} job record(s) into dist/`);
 }
 
 main();
