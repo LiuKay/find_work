@@ -9,7 +9,9 @@ description: Find and curate daily high-quality foreign-company China roles and 
 
 Curate a daily list of high-quality jobs that China-based applicants can realistically apply to. Support both public multi-category roundups for friends from different backgrounds and targeted searches for a specific role profile. Prioritize quality over quantity, avoid repeats from previous daily picks, and output date-stamped Markdown records in the current project.
 
-Do not assume a personal default job profile. In targeted mode, the user must provide role keywords, industry, seniority, or other search parameters. In public roundup mode, use the multi-category coverage rules from `references/search-and-screening.md`.
+This skill is source-driven. Editable source groups, role profiles, screening rules, link rules, and output defaults live in `sources/job-search-config.toml`. `SKILL.md` defines the workflow and non-negotiable safety constraints; the TOML file defines the normal search and screening inputs.
+
+Do not assume a personal default job profile. In targeted mode, the user must provide role keywords, industry, seniority, or other search parameters, or match an enabled role profile from `sources/job-search-config.toml`. In public roundup mode, use enabled role profiles from the TOML source as the coverage pool.
 
 ## Files
 
@@ -22,6 +24,19 @@ Do not assume a personal default job profile. In targeted mode, the user must pr
 - Maintain `/Users/kaybee/Documents/github/find_work/job-picks/seen-jobs.tsv` as a lightweight deduplication index with columns: `date`, `title`, `company`, `url`, `job_direction`, `source`.
 - Before selecting jobs, scan both `seen-jobs.tsv` and existing Markdown files in `/Users/kaybee/Documents/github/find_work/job-picks/` and exclude any job whose company plus title or job URL already appeared.
 - If the user asks for a different output path, follow the user path and still use date-named Markdown files unless told otherwise.
+- Treat `sources/job-search-config.toml` as the editable source of truth for normal source lists, role profiles, screening preferences, and output defaults.
+
+## Source Configuration
+
+- Always read and validate `sources/job-search-config.toml` before searching.
+- Use `scripts/validate_source_config.py` to validate the TOML source. Stop and report the configuration errors if validation fails.
+- Configuration precedence is: user input for the current run > `sources/job-search-config.toml` > non-negotiable safety constraints in this `SKILL.md`.
+- User input may override target roles, industry, seniority, language constraints, excluded industries, and count for the current run. Do not write those temporary overrides back to the TOML file unless the user explicitly asks to update the source.
+- Public roundup mode must use enabled `role_profiles` from the TOML source for coverage. Do not require every profile every day; use them to build the candidate pool and keep quality high.
+- Targeted mode must first try to match the user's requested role/industry against enabled `role_profiles` by `id`, `label`, `keywords`, or `directions`. If no profile matches, use the user's words as temporary role keywords for that run.
+- Use enabled `source_groups` from the TOML source as the primary search lanes. Do not use disabled source groups.
+- `trust_level = "A"` sources are preferred for final links. `trust_level = "B"` sources can be final links only when they are public, specific, active job pages. `trust_level = "C"` sources are discovery-only when `avoid_as_final_link = true`; find a canonical employer or ATS URL before selecting the job.
+- `references/search-and-screening.md` is explanatory reference material. Use it to interpret edge cases, but do not treat it as the primary editable source list.
 
 ## Scripts
 
@@ -33,6 +48,7 @@ Use bundled scripts for deterministic bookkeeping and output. Run them from the 
 - `scripts/link_check.py`: run basic reader-facing URL checks. Use it as a first-pass filter; still open finalist links directly before final output.
 - `scripts/format_daily_picks.py`: validate final structured jobs and render the required Markdown format.
 - `scripts/validate_report.py`: validate the rendered Markdown report for required fields, link format, count consistency, duplicate sections, and forbidden internal wording.
+- `scripts/validate_source_config.py`: validate `sources/job-search-config.toml` using Python standard-library `tomllib`; requires Python 3.11+ and no third-party package.
 
 These scripts do not decide whether a job is good or China-applicable. The agent still owns source search, JD interpretation, risk judgment, time-zone judgment, and final selection.
 
@@ -45,23 +61,29 @@ These scripts do not decide whether a job is good or China-applicable. The agent
 
 1. Confirm the run date using the current date from the environment. Use that date in the output filename and final note.
 2. Identify the mode. If the user did not specify a mode, infer public roundup mode for group/friend/newsletter wording and targeted mode for role/profile wording.
-3. Parse the user's current parameters: role, industry, seniority, skill constraints, language requirements, excluded industries, requested count, and whether broad public coverage is desired.
-4. Load `references/search-and-screening.md` for sources, search query patterns, classification rules, time-zone rules, and risk filters.
-5. Run `scripts/seen_jobs.py ensure` and `scripts/bad_links.py ensure`, then run `scripts/seen_jobs.py snapshot --format json` plus `scripts/bad_links.py snapshot`. Keep a compact dedupe and bad-link snapshot for this run.
-6. If subagents are available and the requested search is broad, use the dispatcher workflow in `references/multi-agent-workflow.md`: the main agent assigns distinct source/category lanes to child agents, then owns deduplication, final screening, writing, and final link validation. If subagents are unavailable or the request is narrow, run the same lanes sequentially.
-7. Search live job sources. Because job listings change frequently, always browse the web for current listings.
-8. Build a candidate pool larger than the requested count. For each promising candidate, run `scripts/seen_jobs.py check --title ... --company ... --url ...` and `scripts/bad_links.py check --title ... --company ... --url ...`; remove duplicates and previously reported bad links before spending more review time.
-9. Reject jobs that fail the hard rules:
+3. Run `scripts/validate_source_config.py`. If it fails, stop before searching and report the TOML configuration errors.
+4. Load `sources/job-search-config.toml` and parse enabled `source_groups`, enabled `role_profiles`, `screening_rules`, `link_rules`, and `output_defaults`. Also load `references/search-and-screening.md` only as explanatory reference for edge cases.
+5. Parse the user's current parameters: role, industry, seniority, skill constraints, language requirements, excluded industries, requested count, and whether broad public coverage is desired.
+6. Resolve the search plan from user input plus TOML:
+   - Public roundup mode: use enabled TOML role profiles as the coverage pool and use TOML count defaults unless the user specified a count.
+   - Targeted mode: match user input to enabled TOML role profiles. If no profile matches, use the user input as temporary keywords for this run.
+   - Build search queries from enabled TOML source groups and their `search_templates`, replacing `{role}` with role/profile keywords.
+7. Run `scripts/seen_jobs.py ensure` and `scripts/bad_links.py ensure`, then run `scripts/seen_jobs.py snapshot --format json` plus `scripts/bad_links.py snapshot`. Keep a compact dedupe and bad-link snapshot for this run.
+8. If subagents are available and the requested search is broad, use the dispatcher workflow in `references/multi-agent-workflow.md`: the main agent assigns distinct source/category lanes to child agents, then owns deduplication, final screening, writing, and final link validation. If subagents are unavailable or the request is narrow, run the same lanes sequentially.
+9. Search live job sources. Because job listings change frequently, always browse the web for current listings. Use enabled TOML source groups as the search lanes and do not use disabled source groups.
+10. Build a candidate pool larger than the requested count. For each promising candidate, run `scripts/seen_jobs.py check --title ... --company ... --url ...` and `scripts/bad_links.py check --title ... --company ... --url ...`; remove duplicates and previously reported bad links before spending more review time.
+11. Reject jobs that fail the hard rules:
    - Overseas jobs must be remote.
    - Do not select roles with China time-zone incompatibility over 5 hours unless the user explicitly requested them.
    - Do not select obvious scams, gray-market roles, high-risk crypto projects, gambling, adult industry, paid-to-apply jobs, brush-order work, pure pyramid/referral schemes, or vague high-pay roles with unclear company identity.
    - Do not select platform homepages, search pages, company job-board landing pages, category pages, expired pages, or pages that do not show the selected role.
-10. For Greenhouse, Lever, Ashby, Workable, SmartRecruiters, and company career URLs, run `scripts/ats_extract.py <url>` when shell network access is available. Use extracted title/company/location as a consistency check; if it disagrees with the candidate, open the page and resolve the mismatch before proceeding.
-11. **MANDATORY link check — do not skip, do not proceed to step 12 until complete.** Run `scripts/link_check.py --url <url> --title <title> --company <company>` for every finalist URL one by one. Any URL that returns `"ok_basic": false`, an HTTP error, or a bad-page marker must be dropped and replaced before continuing. After the script passes, also open each finalist URL directly and run the final reader-usability pass from `references/search-and-screening.md`; replace or reject any job whose link cannot be verified. Record every dropped link via `scripts/bad_links.py append` before searching for a replacement. This verification is internal; do not include a `链接核验` field or mention scraping, crawling, rendering, parser behavior, ATS quirks, or verification mechanics in the public output.
-12. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 11 may appear here.
-13. Run `scripts/format_daily_picks.py --input <final-jobs.json> ...` to validate required fields and render Markdown. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Fix any validation errors before writing final output.
-14. Save or append the rendered Markdown to the appropriate file, then run `scripts/validate_report.py <report.md> --check-links` whenever shell network access is available. Fix validation errors before responding. If shell network is unavailable, run `scripts/link_check.py` on every final URL separately as soon as access is available; do not rely on Markdown-only validation.
-15. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. Also provide the same content in the response unless the user only asked to save it.
+12. Apply TOML `screening_rules` and `link_rules` as practical screening inputs, but never use TOML to weaken the hard rules above.
+13. For Greenhouse, Lever, Ashby, Workable, SmartRecruiters, and company career URLs, run `scripts/ats_extract.py <url>` when shell network access is available. Use extracted title/company/location as a consistency check; if it disagrees with the candidate, open the page and resolve the mismatch before proceeding.
+14. **MANDATORY link check — do not skip, do not proceed to step 15 until complete.** Run `scripts/link_check.py --url <url> --title <title> --company <company>` for every finalist URL one by one. Any URL that returns `"ok_basic": false`, an HTTP error, or a bad-page marker must be dropped and replaced before continuing. After the script passes, also open each finalist URL directly and run the final reader-usability pass from `references/search-and-screening.md`; replace or reject any job whose link cannot be verified. Record every dropped link via `scripts/bad_links.py append` before searching for a replacement. This verification is internal; do not include a `链接核验` field or mention scraping, crawling, rendering, parser behavior, ATS quirks, or verification mechanics in the public output.
+15. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 14 may appear here.
+16. Run `scripts/format_daily_picks.py --input <final-jobs.json> ...` to validate required fields and render Markdown. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Fix any validation errors before writing final output.
+17. Save or append the rendered Markdown to the appropriate file, then run `scripts/validate_report.py <report.md> --check-links` whenever shell network access is available. Fix validation errors before responding. If shell network is unavailable, run `scripts/link_check.py` on every final URL separately as soon as access is available; do not rely on Markdown-only validation.
+18. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. Also provide the same content in the response unless the user only asked to save it.
 
 If the user reports a broken, closed, login-gated, paywalled, wrong-job, or unavailable link from a previous report, run `scripts/bad_links.py append --date ... --url ... --title ... --company ... --reason ...` before finding a replacement. Treat that report as decisive for future public usefulness.
 
