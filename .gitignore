@@ -1,3 +1,14 @@
 node_modules/
 .DS_Store
 dist/
+
+# Local agent/tool state
+.agents/
+.claude/
+.codegraph/
+.gemini/
+.impeccable/
+.kiro/
+.opencode/
+.qoder/
+opencode.json
