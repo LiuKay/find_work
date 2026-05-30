@@ -254,6 +254,48 @@ function readPick(file) {
   };
 }
 
+function uniqueValues(values) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function issueTag(title) {
+  if (/低英文|英文门槛/.test(title)) return "低英文";
+  if (/产品|项目|PM|Pmo|PMO/i.test(title)) return "产品/项目";
+  if (/IT|技术|开发|需求分析|系统分析/i.test(title)) return "IT/系统";
+  if (/大数据|数据/.test(title)) return "数据";
+  return "公共精选";
+}
+
+function renderIssueMeta(pick, className = "issue-meta") {
+  return `<span class="${className}">${escapeHtml(issueTag(pick.title))}</span>`;
+}
+
+function latestIssueSummary(jobs) {
+  if (!jobs.length) {
+    return {
+      countText: "本期岗位正在整理",
+      directions: ["外企", "APAC", "远程"],
+      fitText: "适合先看最新更新，再按方向回到归档筛选。",
+    };
+  }
+
+  const directions = uniqueValues(jobs.map((job) => job.direction)).slice(0, 4);
+  const workModes = uniqueValues(jobs.map((job) => job.workMode)).slice(0, 2);
+  const lowBarrier = jobs.some((job) => /低|入门/.test(`${job.threshold} ${job.experience}`));
+  const fitText = [
+    workModes.length ? `工作方式包含 ${workModes.join(" / ")}` : "",
+    lowBarrier ? "有低门槛或入门可看的岗位" : "适合按方向快速挑选",
+  ]
+    .filter(Boolean)
+    .join("，");
+
+  return {
+    countText: `本期 ${jobs.length} 个岗位`,
+    directions: directions.length ? directions : ["外企", "APAC", "远程"],
+    fitText: fitText || "申请前仍需以原岗位页面为准。",
+  };
+}
+
 function pageTemplate({ title, description, body, canonicalPath = "/", scripts = [] }) {
   const scriptTags = scripts
     .map((script) => `<script src="${escapeHtml(script)}" defer></script>`)
@@ -316,11 +358,14 @@ function renderPickPage(pick) {
 
 function renderIndex(picks) {
   const latest = picks[0];
+  const latestJobs = latest ? extractJobs(latest) : [];
+  const latestSummary = latestIssueSummary(latestJobs);
   const archiveItems = picks
     .slice(0, 8)
     .map(
       (pick) => `<li>
         <a href="/picks/${pick.slug}/">
+          ${renderIssueMeta(pick)}
           <span>${escapeHtml(pick.title)}</span>
           <time>${escapeHtml(pick.date)}</time>
         </a>
@@ -329,26 +374,60 @@ function renderIndex(picks) {
     .join("\n");
 
   const latestBlock = latest
-    ? `<section class="latest-panel">
-        <div class="section-kicker">Latest Pick</div>
-        <h1>${escapeHtml(latest.title)}</h1>
-        <p>每天把适合中国申请者的外企、APAC 和海外远程岗位整理成一份可直接转发的网页。</p>
-        <a class="primary-link" href="/picks/${latest.slug}/">打开最新精选</a>
-      </section>`
-    : `<section class="latest-panel"><h1>还没有岗位精选</h1><p>把 Markdown 文件放入 job-picks 后重新构建。</p></section>`;
+    ? `<aside class="latest-panel" aria-label="最新精选">
+        <div class="section-kicker">最新一期</div>
+        <h2>${escapeHtml(latest.title)}</h2>
+        <div class="latest-summary" aria-label="本期岗位摘要">
+          <strong>${escapeHtml(latestSummary.countText)}</strong>
+          <span>${escapeHtml(latestSummary.fitText)}</span>
+          <div class="summary-tags">
+            ${latestSummary.directions
+              .map((direction) => `<span>${escapeHtml(direction)}</span>`)
+              .join("")}
+          </div>
+        </div>
+        <div class="home-actions">
+          <a class="primary-link" href="/picks/${latest.slug}/">打开最新精选</a>
+        </div>
+        <p class="trust-note">申请前请以原岗位页面为准。</p>
+      </aside>`
+    : `<aside class="latest-panel"><h2>还没有岗位精选</h2><p>把 Markdown 文件放入 job-picks 后重新构建。</p></aside>`;
 
   return pageTemplate({
     title: "Find Work 外企/远程岗位精选",
     description: "面向朋友分享的外企、APAC 和海外远程岗位精选归档。",
     body: `<main>
-  <section class="home-grid">
+  <section class="home-hero" aria-labelledby="home-hero-title">
+    <div class="hero-copy">
+      <div class="section-kicker">社群筛选笔记</div>
+      <h1 id="home-hero-title">外企 / 远程岗位筛选台</h1>
+      <p>每天把适合中国申请者的外企、APAC 和海外远程岗位拆成可筛选的方向、语言、门槛和可投把握。</p>
+      <div class="fit-dimensions hero-dimensions" aria-label="可筛选条件">
+        <span>岗位方向</span>
+        <span>工作方式</span>
+        <span>英文要求</span>
+        <span>经验阶段</span>
+        <span>申请门槛</span>
+        <span>中国可投把握</span>
+      </div>
+      <div class="home-actions">
+        <a class="primary-link hero-primary" href="/archive/">进入岗位筛选</a>
+        ${latest ? `<a class="text-link hero-secondary" href="/picks/${latest.slug}/">看最新一期</a>` : ""}
+      </div>
+    </div>
     ${latestBlock}
+  </section>
+  <section class="home-grid">
     <aside class="archive-panel" aria-label="近期归档">
-      <div class="section-kicker">Archive</div>
       <h2>近期更新</h2>
       <ol class="archive-list">${archiveItems}</ol>
       <a class="secondary-link" href="/archive/">查看全部</a>
     </aside>
+    <section class="fit-entry" aria-labelledby="fit-entry-title">
+      <h2 id="fit-entry-title">找适合我的岗位</h2>
+      <p>归档页可以按发布时间、关键词、英文要求、工作方式、申请门槛、可投把握、经验要求和岗位方向筛选。</p>
+      <a class="primary-link" href="/archive/">进入岗位筛选</a>
+    </section>
   </section>
 </main>`,
   });

@@ -120,11 +120,11 @@ def extract_link_check_jobs(path: Path) -> list[dict[str, str]]:
     return jobs
 
 
-def run_link_checks(path: Path) -> list[str]:
+def run_link_checks(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     script = Path(__file__).with_name("link_check.py")
     jobs = extract_link_check_jobs(path)
     if not jobs:
-        return ["no links available for link check"]
+        return ["no links available for link check"], []
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json", delete=False) as fh:
         json.dump(jobs, fh, ensure_ascii=False)
         temp_path = Path(fh.name)
@@ -140,13 +140,22 @@ def run_link_checks(path: Path) -> list[str]:
     try:
         results = json.loads(proc.stdout)
     except json.JSONDecodeError:
-        return [f"link_check.py did not return JSON: {proc.stderr or proc.stdout}"]
+        return [f"link_check.py did not return JSON: {proc.stderr or proc.stdout}"], []
     errors = []
+    bad_link_candidates = []
     for idx, item in enumerate(results, 1):
         if not item.get("ok_basic"):
             warnings = "; ".join(item.get("warnings") or [])
             errors.append(f"job {idx}: link_check failed for {item.get('url')}: {warnings}")
-    return errors
+            bad_link_candidates.append(
+                {
+                    "url": str(item.get("url", "")),
+                    "title": str(item.get("title", "")),
+                    "company": str(item.get("company", "")),
+                    "reason": warnings or f"status {item.get('status', '')}".strip(),
+                }
+            )
+    return errors, bad_link_candidates
 
 
 def main() -> int:
@@ -156,8 +165,9 @@ def main() -> int:
     args = parser.parse_args()
     result = validate(args.report)
     if args.check_links:
-        link_errors = run_link_checks(args.report)
+        link_errors, bad_link_candidates = run_link_checks(args.report)
         result["errors"].extend(link_errors)
+        result["bad_link_candidates"] = bad_link_candidates
         result["valid"] = not result["errors"]
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["valid"] else 1

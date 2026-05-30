@@ -130,6 +130,15 @@ preferred_regions = ["China", "Hong Kong", "Singapore", "APAC", "Asia", "Remote"
 notes = "用于公共精选中的数据、质量和 AI 相关岗位池。"
 
 [[role_profiles]]
+id = "big-data-dev"
+label = "大数据开发 / 数据工程 / 数据平台"
+enabled = true
+keywords = ["Big Data Engineer", "Data Engineer", "Senior Data Engineer", "Data Platform Engineer", "Data Warehouse Engineer", "Spark Engineer", "Flink Engineer", "Hadoop Engineer", "Databricks Data Engineer"]
+directions = ["数据", "技术"]
+preferred_regions = ["China", "Hong Kong", "Singapore", "APAC", "Asia", "Remote"]
+notes = "定向精选常用岗位池，覆盖大数据开发、数据工程、数据平台、Spark、Flink、Hadoop、Databricks 和数据仓库。"
+
+[[role_profiles]]
 id = "tech-solutions"
 label = "技术支持 / 实施 / 解决方案"
 enabled = true
@@ -164,6 +173,8 @@ prefer_regions = ["中国大陆", "香港", "新加坡", "马来西亚", "菲律
 reject_regions = ["US-only", "Canada-only", "Latin America-only", "EU-only without Asia flexibility", "UK-only without Asia flexibility"]
 reject_industries = ["博彩", "成人行业", "灰产", "高风险加密货币", "刷单", "传销", "纯佣金高薪销售"]
 risk_keywords = ["upfront payment", "training fee", "deposit", "equipment purchase", "pay to apply", "commission only", "click farm", "fake review", "referral commission"]
+excluded_companies = ["Binance", "Crypto.com", "OKX", "TRM Labs"]
+excluded_domains = ["binance.com", "crypto.com", "okx.com", "trmlabs.com"]
 
 [link_rules]
 must_be_specific_job_page = true

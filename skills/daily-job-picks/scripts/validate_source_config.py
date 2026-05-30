@@ -60,6 +60,8 @@ REQUIRED_SCREENING_RULES = {
     "reject_regions",
     "reject_industries",
     "risk_keywords",
+    "excluded_companies",
+    "excluded_domains",
 }
 REQUIRED_LINK_RULES = {
     "must_be_specific_job_page",
@@ -195,7 +197,14 @@ def validate_screening_rules(config: dict[str, Any]) -> list[str]:
         errors.append("screening_rules.max_timezone_difference_hours must be an integer")
     if "overseas_jobs_must_be_remote" in rules and not isinstance(rules["overseas_jobs_must_be_remote"], bool):
         errors.append("screening_rules.overseas_jobs_must_be_remote must be a boolean")
-    for key in ("prefer_regions", "reject_regions", "reject_industries", "risk_keywords"):
+    for key in (
+        "prefer_regions",
+        "reject_regions",
+        "reject_industries",
+        "risk_keywords",
+        "excluded_companies",
+        "excluded_domains",
+    ):
         if key in rules and not is_nonempty_string_list(rules[key]):
             errors.append(f"screening_rules.{key} must be a non-empty string array")
     return errors
@@ -243,6 +252,47 @@ def validate(path: Path) -> dict[str, Any]:
     }
 
 
+def summarize(path: Path) -> dict[str, Any]:
+    config, load_errors = load_config(path)
+    if config is None:
+        return {"valid": False, "errors": load_errors, "warnings": []}
+    validation = validate(path)
+    source_groups = config.get("source_groups") if isinstance(config.get("source_groups"), list) else []
+    role_profiles = config.get("role_profiles") if isinstance(config.get("role_profiles"), list) else []
+    screening_rules = config.get("screening_rules") if isinstance(config.get("screening_rules"), dict) else {}
+
+    enabled_sources = [
+        {
+            "name": item.get("name", ""),
+            "trust_level": item.get("trust_level", ""),
+            "source_type": item.get("source_type", ""),
+            "templates": len(item.get("search_templates", [])) if isinstance(item.get("search_templates"), list) else 0,
+            "avoid_as_final_link": item.get("avoid_as_final_link", False),
+        }
+        for item in source_groups
+        if isinstance(item, dict) and item.get("enabled") is True
+    ]
+    enabled_profiles = [
+        {
+            "id": item.get("id", ""),
+            "label": item.get("label", ""),
+            "keywords": len(item.get("keywords", [])) if isinstance(item.get("keywords"), list) else 0,
+            "directions": item.get("directions", []),
+        }
+        for item in role_profiles
+        if isinstance(item, dict) and item.get("enabled") is True
+    ]
+    return {
+        "valid": validation["valid"],
+        "errors": validation["errors"],
+        "warnings": validation["warnings"],
+        "enabled_sources": enabled_sources,
+        "enabled_role_profiles": enabled_profiles,
+        "excluded_companies": screening_rules.get("excluded_companies", []),
+        "excluded_domains": screening_rules.get("excluded_domains", []),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -251,6 +301,7 @@ def main() -> int:
         type=Path,
         default=Path(__file__).resolve().parent.parent / "sources" / "job-search-config.toml",
     )
+    parser.add_argument("--summary", action="store_true", help="print enabled sources, profiles, and exclusions")
     args = parser.parse_args()
 
     if sys.version_info < (3, 11) or tomllib is None:
@@ -260,7 +311,7 @@ def main() -> int:
             "warnings": [],
         }
     else:
-        result = validate(args.config)
+        result = summarize(args.config) if args.summary else validate(args.config)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["valid"] else 1
 
