@@ -233,7 +233,7 @@ function getPickFiles() {
   if (!fs.existsSync(PICKS_DIR)) return [];
   return fs
     .readdirSync(PICKS_DIR)
-    .filter((file) => file.endsWith(".md"))
+    .filter((file) => /^\d{4}-\d{2}-\d{2}(?:-[\w-]+)?\.md$/.test(file))
     .sort()
     .reverse();
 }

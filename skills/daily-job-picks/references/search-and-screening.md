@@ -86,6 +86,19 @@ Do not force every category every day. Prefer fewer high-quality jobs over filli
 
 In the final output metadata, report the actual number selected, not the requested target range. Use `数量：N 个`, not `数量目标：6-10 个` or similar.
 
+## AI Trainer and Chinese-Language Contractor Trap
+
+Do not treat Mandarin, Simplified Chinese, or Chinese-language requirements as evidence that a role accepts mainland China-based applicants. Many overseas AI Trainer, data annotation, rater, evaluator, search-quality, ads-quality, and language-model training contractor roles recruit Chinese speakers who live abroad, and may exclude mainland China for payment, tax, platform, or legal reasons.
+
+Reject these roles for China-based daily picks unless the job page explicitly states one of:
+
+- work location includes mainland China or China
+- hiring jurisdiction includes China
+- applicant may work from China
+- company has a China-local hiring or contracting path for the role
+
+Do not use `中国可投待确认` for a generic `Mandarin Chinese AI Trainer`, `Simplified Chinese Evaluator`, `Chinese Data Annotator`, or similar overseas contractor role when the only China-related signal is language. If the user explicitly asks for overseas Chinese applicants, this rule can be relaxed for that run.
+
 ## Freshness
 
 Prefer jobs posted or refreshed within the last 45 days when a posting date is visible. If no date is visible, an active job page with a working application path may still be used, but prefer it only when it clearly matches China/APAC eligibility and fills an important category. Reject stale-looking roles that have no posting date, no fresh company signal, and weak eligibility.

@@ -173,8 +173,8 @@ prefer_regions = ["中国大陆", "香港", "新加坡", "马来西亚", "菲律
 reject_regions = ["US-only", "Canada-only", "Latin America-only", "EU-only without Asia flexibility", "UK-only without Asia flexibility"]
 reject_industries = ["博彩", "成人行业", "灰产", "高风险加密货币", "刷单", "传销", "纯佣金高薪销售"]
 risk_keywords = ["upfront payment", "training fee", "deposit", "equipment purchase", "pay to apply", "commission only", "click farm", "fake review", "referral commission"]
-excluded_companies = ["Binance", "Crypto.com", "OKX", "TRM Labs"]
-excluded_domains = ["binance.com", "crypto.com", "okx.com", "trmlabs.com"]
+excluded_companies = ["Binance", "Crypto.com", "OKX", "TRM Labs", "Outlier", "DataAnnotation"]
+excluded_domains = ["binance.com", "crypto.com", "okx.com", "trmlabs.com", "outlier.ai", "dataannotation.tech"]
 
 [link_rules]
 must_be_specific_job_page = true

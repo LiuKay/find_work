@@ -25,13 +25,15 @@ Do not assume a personal default job profile. In targeted mode, the user must pr
 - Before selecting jobs, scan both `seen-jobs.tsv` and existing Markdown files in `/Users/kaybee/Documents/github/find_work/job-picks/` and exclude any job whose company plus title or job URL already appeared.
 - If the user asks for a different output path, follow the user path and still use date-named Markdown files unless told otherwise.
 - Treat `sources/job-search-config.toml` as the editable source of truth for normal source lists, role profiles, screening preferences, and output defaults.
+- If `/Users/kaybee/Documents/github/find_work/config/job-picks-audience-preferences.md` exists, read it as the project-level audience preference override before searching. It is intentionally human-readable Markdown for local group demand, not a replacement for the skill's TOML source list or hard safety rules.
 
 ## Source Configuration
 
 - Always read and validate `sources/job-search-config.toml` before searching.
 - Use `scripts/validate_source_config.py` to validate the TOML source. Stop and report the configuration errors if validation fails.
-- Configuration precedence is: user input for the current run > `sources/job-search-config.toml` > non-negotiable safety constraints in this `SKILL.md`.
+- Configuration precedence is: user input for the current run > project-level audience preferences in `/Users/kaybee/Documents/github/find_work/config/job-picks-audience-preferences.md` > `sources/job-search-config.toml` > non-negotiable safety constraints in this `SKILL.md`.
 - User input may override target roles, industry, seniority, language constraints, excluded industries, and count for the current run. Do not write those temporary overrides back to the TOML file unless the user explicitly asks to update the source.
+- Project-level audience preferences may override public roundup emphasis, target count, role-direction priority, work-mode priority, English-level tendency, seniority tendency, and applicant-barrier tendency. They must not override hard safety rules, link rules, bad-link exclusions, or explicit company/domain exclusions.
 - Public roundup mode must use enabled `role_profiles` from the TOML source for coverage. Do not require every profile every day; use them to build the candidate pool and keep quality high.
 - Targeted mode must first try to match the user's requested role/industry against enabled `role_profiles` by `id`, `label`, `keywords`, or `directions`. If no profile matches, use the user's words as temporary role keywords for that run.
 - Use enabled `source_groups` from the TOML source as the primary search lanes. Do not use disabled source groups.
@@ -65,28 +67,35 @@ These scripts do not decide whether a job is good or China-applicable. The agent
 2. Identify the mode. If the user did not specify a mode, infer public roundup mode for group/friend/newsletter wording and targeted mode for role/profile wording.
 3. Run `scripts/validate_source_config.py --summary`. If it fails, stop before searching and report the TOML configuration errors.
 4. Load `sources/job-search-config.toml` and parse enabled `source_groups`, enabled `role_profiles`, `screening_rules`, `link_rules`, and `output_defaults`. Also load `references/search-and-screening.md` only as explanatory reference for edge cases.
-5. Parse the user's current parameters: role, industry, seniority, skill constraints, language requirements, excluded industries, requested count, and whether broad public coverage is desired.
-6. Run `scripts/resolve_search_plan.py --mode ... --role ... --industry ...` to resolve the search plan from user input plus TOML:
+5. If `/Users/kaybee/Documents/github/find_work/config/job-picks-audience-preferences.md` exists, read it before resolving public roundup search emphasis:
+   - Use `本期总数` as the preferred public roundup target unless the user gives a count.
+   - Use `岗位方向优先级` to decide which role families get more search effort and finalist slots.
+   - Use `工作方式优先级`, `英文要求倾向`, `经验阶段倾向`, and `申请门槛倾向` as tie-breakers when choosing between otherwise similar jobs.
+   - Use `明确排除` as project-specific screening guidance, but never as permission to weaken hard rules.
+   - Keep the file human-facing; do not require TOML/YAML syntax from the user.
+6. Parse the user's current parameters: role, industry, seniority, skill constraints, language requirements, excluded industries, requested count, and whether broad public coverage is desired.
+7. Run `scripts/resolve_search_plan.py --mode ... --role ... --industry ...` to resolve the search plan from user input plus TOML:
    - Public roundup mode: use enabled TOML role profiles as the coverage pool and use TOML count defaults unless the user specified a count.
    - Targeted mode: match user input to enabled TOML role profiles. If no profile matches, use the user input as temporary keywords for this run.
    - Build search queries from enabled TOML source groups and their `search_templates`, replacing `{role}` with role/profile keywords.
    - Apply `excluded_companies` and `excluded_domains` from the resolved plan before spending review time on candidates.
-7. Run `scripts/seen_jobs.py ensure` and `scripts/bad_links.py ensure`, then run `scripts/seen_jobs.py snapshot --format json` plus `scripts/bad_links.py snapshot`. Keep a compact dedupe and bad-link snapshot for this run.
-8. If subagents are available and the requested search is broad, use the dispatcher workflow in `references/multi-agent-workflow.md`: the main agent assigns distinct source/category lanes to child agents, then owns deduplication, final screening, writing, and final link validation. If subagents are unavailable or the request is narrow, run the same lanes sequentially.
-9. Search live job sources. Because job listings change frequently, always browse the web for current listings. Use enabled TOML source groups as the search lanes and do not use disabled source groups.
-10. Build a candidate pool larger than the requested count. For each promising candidate, run `scripts/seen_jobs.py check --title ... --company ... --url ...` and `scripts/bad_links.py check --title ... --company ... --url ...`; remove duplicates and previously reported bad links before spending more review time.
-11. Reject jobs that fail the hard rules:
+8. Run `scripts/seen_jobs.py ensure` and `scripts/bad_links.py ensure`, then run `scripts/seen_jobs.py snapshot --format json` plus `scripts/bad_links.py snapshot`. Keep a compact dedupe and bad-link snapshot for this run.
+9. If subagents are available and the requested search is broad, use the dispatcher workflow in `references/multi-agent-workflow.md`: the main agent assigns distinct source/category lanes to child agents, then owns deduplication, final screening, writing, and final link validation. If subagents are unavailable or the request is narrow, run the same lanes sequentially.
+10. Search live job sources. Because job listings change frequently, always browse the web for current listings. Use enabled TOML source groups as the search lanes and do not use disabled source groups.
+11. Build a candidate pool larger than the requested count. For each promising candidate, run `scripts/seen_jobs.py check --title ... --company ... --url ...` and `scripts/bad_links.py check --title ... --company ... --url ...`; remove duplicates and previously reported bad links before spending more review time.
+12. Reject jobs that fail the hard rules:
    - Overseas jobs must be remote.
    - Do not select roles with China time-zone incompatibility over 5 hours unless the user explicitly requested them.
+   - Do not select generic overseas AI Trainer, data annotation, rater, evaluator, or language-model training contractor roles for Mandarin, Simplified Chinese, or Chinese unless the job page explicitly lists mainland China/China as an accepted work location or hiring jurisdiction. Chinese-language ability alone is not evidence that China-based applicants can apply; many such roles target overseas Chinese speakers.
    - Do not select obvious scams, gray-market roles, high-risk crypto projects, gambling, adult industry, paid-to-apply jobs, brush-order work, pure pyramid/referral schemes, or vague high-pay roles with unclear company identity.
    - Do not select platform homepages, search pages, company job-board landing pages, category pages, expired pages, or pages that do not show the selected role.
-12. Apply TOML `screening_rules` and `link_rules` as practical screening inputs, but never use TOML to weaken the hard rules above.
-13. For Greenhouse, Lever, Ashby, Workable, SmartRecruiters, and company career URLs, run `scripts/ats_extract.py <url>` when shell network access is available. Use extracted title/company/location as a consistency check; if it disagrees with the candidate, open the page and resolve the mismatch before proceeding.
-14. **MANDATORY link check — do not skip, do not proceed to step 15 until complete.** Run `scripts/link_check.py --url <url> --title <title> --company <company>` for every finalist URL one by one. Any URL that returns `"ok_basic": false`, an HTTP error, or a bad-page marker must be dropped and replaced before continuing. After the script passes, also open each finalist URL directly and run the final reader-usability pass from `references/search-and-screening.md`; replace or reject any job whose link cannot be verified. Record every dropped link via `scripts/bad_links.py append` before searching for a replacement. This verification is internal; do not include a `链接核验` field or mention scraping, crawling, rendering, parser behavior, ATS quirks, or verification mechanics in the public output.
-15. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 14 may appear here.
-16. Run `scripts/format_daily_picks.py --input <final-jobs.json> ...` to validate required fields and render Markdown. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Fix any validation errors before writing final output.
-17. Save or append the rendered Markdown to the appropriate file, then run `scripts/validate_report.py <report.md> --check-links` whenever shell network access is available. Fix validation errors before responding. If the result includes `bad_link_candidates`, record each failed URL with `scripts/bad_links.py append` before replacing it. If shell network is unavailable, run `scripts/link_check.py` on every final URL separately as soon as access is available; do not rely on Markdown-only validation.
-18. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. Also provide the same content in the response unless the user only asked to save it.
+13. Apply TOML `screening_rules`, project-level audience preferences, and `link_rules` as practical screening inputs, but never use them to weaken the hard rules above.
+14. For Greenhouse, Lever, Ashby, Workable, SmartRecruiters, and company career URLs, run `scripts/ats_extract.py <url>` when shell network access is available. Use extracted title/company/location as a consistency check; if it disagrees with the candidate, open the page and resolve the mismatch before proceeding.
+15. **MANDATORY link check — do not skip, do not proceed to step 16 until complete.** Run `scripts/link_check.py --url <url> --title <title> --company <company>` for every finalist URL one by one. Any URL that returns `"ok_basic": false`, an HTTP error, or a bad-page marker must be dropped and replaced before continuing. After the script passes, also open each finalist URL directly and run the final reader-usability pass from `references/search-and-screening.md`; replace or reject any job whose link cannot be verified. Record every dropped link via `scripts/bad_links.py append` before searching for a replacement. This verification is internal; do not include a `链接核验` field or mention scraping, crawling, rendering, parser behavior, ATS quirks, or verification mechanics in the public output.
+16. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 15 may appear here.
+17. Run `scripts/format_daily_picks.py --input <final-jobs.json> ...` to validate required fields and render Markdown. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Fix any validation errors before writing final output.
+18. Save or append the rendered Markdown to the appropriate file, then run `scripts/validate_report.py <report.md> --check-links` whenever shell network access is available. Fix validation errors before responding. If the result includes `bad_link_candidates`, record each failed URL with `scripts/bad_links.py append` before replacing it. If shell network is unavailable, run `scripts/link_check.py` on every final URL separately as soon as access is available; do not rely on Markdown-only validation.
+19. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. Also provide the same content in the response unless the user only asked to save it.
 
 If the user reports a broken, closed, login-gated, paywalled, wrong-job, or unavailable link from a previous report, run `scripts/bad_links.py append --date ... --url ... --title ... --company ... --reason ...` before finding a replacement. Treat that report as decisive for future public usefulness.
 
@@ -95,6 +104,8 @@ If the user reports a broken, closed, login-gated, paywalled, wrong-job, or unav
 Prefer 6-10 strong jobs for public roundup mode and 5-8 strong jobs for targeted mode. Return fewer if not enough high-quality, current, non-duplicate jobs meet all rules. Do not pad with weak matches.
 
 Use direct evidence from the job page for location, remote status, company, time-zone feasibility, role requirements, and application path. If a field is unclear but the role is otherwise promising, label it as `中国可投待确认` and state what the applicant should confirm, using applicant-facing wording such as `投递前确认中国大陆雇佣/合同形式`. Do not expose internal collection or verification details such as `抓取`, `爬取`, `结构化字段`, `无登录环境`, `页面渲染`, `ATS`, `解析`, `检索结果`, or `不同环境显示不完全`.
+
+For AI Trainer, data annotation, rater, evaluator, and language-model training roles, require stronger China eligibility evidence than for normal remote jobs. A title like `Mandarin Chinese AI Trainer`, `Simplified Chinese Evaluator`, or `Chinese Data Annotator` only proves language demand, not mainland China eligibility. Reject these roles unless the page explicitly supports applicants working from mainland China/China, or the user asks for overseas Chinese applicants instead of China-based applicants.
 
 ## Required Output Format
 
