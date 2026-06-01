@@ -20,10 +20,18 @@ BAD_PAGE_PATTERNS = [
     "not found",
     "page not found",
     "job not found",
+    "we couldn't find this job",
+    "we could not find this job",
     "no longer available",
+    "no longer exists",
+    "this position is no longer available",
     "position has been filled",
     "this job is closed",
     "job is no longer accepting applications",
+    "no longer accepting applications",
+    "not accepting applications",
+    "job has expired",
+    "this job has expired",
     "access denied",
     "sign in",
     "log in",
@@ -145,7 +153,10 @@ def check_candidate(candidate: Candidate, timeout: float) -> dict[str, Any]:
         for warning in result["warnings"]
         if warning.startswith("http error")
         or warning in {"non-success status", "non-html response"}
-        or (warning.startswith("possible bad page marker") and title_missing)
+        or warning.startswith("possible bad page marker")
+        or warning == "job title tokens not found"
+        or warning == "company tokens not found"
+        or warning == "no obvious apply path text found"
     ]
     result["ok_basic"] = not hard_warnings
     return result
