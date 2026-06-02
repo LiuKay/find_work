@@ -30,3 +30,11 @@ date	url	title	company	reason	replacement_url
 2026-06-02	https://toku.co/careers/senior-qa-engineer	Senior QA Engineer	Toku	reported/check failed: 404	https://www.meteorops.com/job/qa-engineer
 2026-06-02	https://startup.jobs/senior-software-qa-engineer-automation-testing-fully-remote-covergo-6856668	Senior Software QA Engineer (Automation Testing) - Fully Remote	CoverGo	check failed: 403, could not verify reader usability	
 2026-06-02	https://job-boards.greenhouse.io/canonical/jobs/5660661	Open Source Networking Software Engineer - ToR Switch / SmartNIC / DPU	Canonical	check failed: captcha marker, could not use as reader-facing final link	
+2026-06-02	https://jobs.smartrecruiters.com/AbbVie/3743990009506326-marketing-manager	Marketing Manager	AbbVie	check failed: page shows job has expired	
+2026-06-02	https://jobs.smartrecruiters.com/QIMA/744000099118400-marketing-specialist	Marketing Specialist	QIMA	check failed: page shows job has expired	
+2026-06-02	https://jobs.smartrecruiters.com/BoschGroup/744000121105397-marketing-specialist-ma	Marketing Specialist _ MA	Bosch Group	check failed: page shows job has expired	
+2026-06-02	https://jobs.smartrecruiters.com/InformaGroupPlc/744000125251049-digital-product-marketing-manager	Digital Product Marketing Manager	Informa Group Plc.	check failed: page shows job has expired	
+2026-06-02	https://jobs.smartrecruiters.com/Sandisk/744000099273072-manager-china-regional-research-insights	Manager, China Regional Research & Insights	Sandisk	check failed: page shows job has expired	
+2026-06-02	https://jobs.smartrecruiters.com/BoschGroup/744000112865823-head-of-strategic-marketing-executive-assistant-of-em-rp-cn-	Head of Strategic Marketing & Executive assistant of EM/RP-CN	Bosch Group	check failed: page shows job has expired	
+2026-06-02	https://jobs.smartrecruiters.com/Visa/744000101943093-marketing-manager	Marketing Manager	Visa	check failed: page shows job has expired	
+2026-06-02	https://jobs.smartrecruiters.com/BoschGroup/744000123395124--em	高级战略与市场情报专员_EM	Bosch Group	user reported: Sorry, this job has expired	https://job-boards.greenhouse.io/jetbrains/jobs/4790191101
