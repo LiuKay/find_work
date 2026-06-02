@@ -38,3 +38,9 @@ date	url	title	company	reason	replacement_url
 2026-06-02	https://jobs.smartrecruiters.com/BoschGroup/744000112865823-head-of-strategic-marketing-executive-assistant-of-em-rp-cn-	Head of Strategic Marketing & Executive assistant of EM/RP-CN	Bosch Group	check failed: page shows job has expired	
 2026-06-02	https://jobs.smartrecruiters.com/Visa/744000101943093-marketing-manager	Marketing Manager	Visa	check failed: page shows job has expired	
 2026-06-02	https://jobs.smartrecruiters.com/BoschGroup/744000123395124--em	高级战略与市场情报专员_EM	Bosch Group	user reported: Sorry, this job has expired	https://job-boards.greenhouse.io/jetbrains/jobs/4790191101
+2026-06-02	https://job-boards.greenhouse.io/meshy/jobs/4987189008	PR & Brand Communications Manager	Meshy	HTTP 404 during direct link check	
+2026-06-02	https://jobs.lever.co/coupa/26016e0b-345f-4252-96a8-c62aa5ae1ef0	Product Communications Manager - 11360	Coupa	HTTP 404 during direct link check	
+2026-06-02	https://jobs.smartrecruiters.com/HMGroup/744000103830165-arket-pr-lead	ARKET PR Lead	H&M Group	link_check_possible_expired_marker	
+2026-06-02	https://jobs.smartrecruiters.com/SyngentaGroup/744000113800237-customer-experience-specialist	Customer Experience Specialist	Syngenta Group	link_check_possible_expired_marker	
+2026-06-02	https://jobs.lever.co/hypebeast/14f555ff-78bc-4fd6-bbf4-6643172cf555	Media Partnerships Manager	Hypebeast	http_404	
+2026-06-02	https://job-boards.greenhouse.io/thetradedesk/jobs/5091529007	APAC Campaign Operations & North Asia Marketing Manager	The Trade Desk	manual_open_missing_job_description	
