@@ -44,3 +44,8 @@ date	url	title	company	reason	replacement_url
 2026-06-02	https://jobs.smartrecruiters.com/SyngentaGroup/744000113800237-customer-experience-specialist	Customer Experience Specialist	Syngenta Group	link_check_possible_expired_marker	
 2026-06-02	https://jobs.lever.co/hypebeast/14f555ff-78bc-4fd6-bbf4-6643172cf555	Media Partnerships Manager	Hypebeast	http_404	
 2026-06-02	https://job-boards.greenhouse.io/thetradedesk/jobs/5091529007	APAC Campaign Operations & North Asia Marketing Manager	The Trade Desk	manual_open_missing_job_description	
+2026-06-02	https://careers.churchdwight.com/jobs/job/r2026-15027-brand-manager	Brand Manager	Church & Dwight	link_check_possible_bad_page_marker_log_in	
+2026-06-02	https://www.ferrerocareers.com/int/en/jobs/senior-brand-manager-kinder	Senior Brand Manager_ Kinder	Ferrero	link_check_http_404	
+2026-06-02	https://startup.jobs/retail-marketing-manager-china-brooks-running-7615962	Retail Marketing Manager, China	Brooks Running	link_check_http_403	
+2026-06-02	https://www.designhotels.com/about/careers/director-brand-portfolio-greater-china	Director, Brand Portfolio - Greater China	Design Hotels	link_check_http_403_use_marriott_official_page	https://careers.marriott.com/zh-cn/director-brand-portfolio-greater-china-design-hotels/job/7915FD629684CA0E2A389344D66EFC58
+2026-06-02	https://job-boards.greenhouse.io/aninebing/jobs/5038032008	Marketing Manager, China	ANINE BING	official_greenhouse_redirects_to_job_board_without_selected_china_role	
