@@ -23,3 +23,9 @@ date	url	title	company	reason	replacement_url
 2026-06-02	https://jobs.lever.co/dlocal/6f978d31-8bf4-4f33-9b46-9b2427d393d2	Technical Account Manager China	dLocal	HTTP 404 during direct link check	
 2026-06-02	https://jobs.smartrecruiters.com/Fastmarkets/744000122250427-customer-success-executive	Customer Success Executive	Fastmarkets	page shows job has expired	
 2026-06-02	https://jobs.lever.co/mendix/496f825b-71a3-484f-aeb2-3766248099f8	Demand Development Representative (Shanghai, China)	Mendix	HTTP 404 during direct link check	
+2026-06-02	https://jobs.lever.co/shopback-2/2abc6f70-0670-4afb-b5b8-953435e5918e	Software Engineer in Test (SET / SDET)	ShopBack	HTTP 404 during direct link check	
+2026-06-02	https://jobs.lever.co/xsolla/68586844-814e-48bd-88f2-b9e953c5d406	Lead QA Engineer	Xsolla	HTTP 404 during direct link check	
+2026-06-02	https://startup.jobs/qa-engineer-remote-4741141	QA Engineer	Remote	check failed: page marked no longer available	https://jobs.lever.co/veeva/05acd8f1-fc74-4b07-adf1-f1e1434cabd1
+2026-06-02	https://weworkremotely.com/remote-jobs/secure-privacy-qa-engineer-ai-automation-intelligent-testing	QA Engineer - AI, Automation & Intelligent Testing	Secure Privacy	check failed: 403, could not verify reader usability	https://jobs.smartrecruiters.com/Nagarro1/744000126635351-associate-staff-engineer
+2026-06-02	https://toku.co/careers/senior-qa-engineer	Senior QA Engineer	Toku	reported/check failed: 404	https://www.meteorops.com/job/qa-engineer
+2026-06-02	https://startup.jobs/senior-software-qa-engineer-automation-testing-fully-remote-covergo-6856668	Senior Software QA Engineer (Automation Testing) - Fully Remote	CoverGo	check failed: 403, could not verify reader usability	
