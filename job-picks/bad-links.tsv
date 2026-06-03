@@ -51,3 +51,5 @@ date	url	title	company	reason	replacement_url
 2026-06-02	https://job-boards.greenhouse.io/aninebing/jobs/5038032008	Marketing Manager, China	ANINE BING	official_greenhouse_redirects_to_job_board_without_selected_china_role	
 2026-06-03	https://job-boards.greenhouse.io/scopely/jobs/5076084008	Senior Recruiter (One-year Contractor)	Scopely	direct URL redirects to general jobs page without selected role	
 2026-06-03	https://jobs.smartrecruiters.com/SegulaTechnologies/744000112697437-supplier-development-sourcing-assistant-manager-china-	Supplier Development & Sourcing – Assistant Manager (China)	Segula Technologies	user reported this job has expired	
+2026-06-03	https://jobs.lever.co/hypebeast/dfb19121-9f63-4fd4-9808-17f5b94bdf60	Senior Account Manager	Hypebeast	http_404	
+2026-06-03	https://jobs.smartrecruiters.com/BoschGroup/744000112042317-product-manager-for-battery-ma	Product Manager for Battery _ MA	Bosch Group	link_check_possible_expired_marker	
