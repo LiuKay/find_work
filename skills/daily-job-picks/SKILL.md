@@ -119,6 +119,8 @@ Output style rules:
 - Do not mention scraping/crawling/search mechanics, parser behavior, login-less environments, structured fields, link verification, or page-rendering limitations in `注意事项` or any public-facing text.
 - If eligibility or employment structure is unclear, describe only the applicant-facing uncertainty, such as `投递前确认是否支持中国大陆远程签约、税务和合同形式`.
 - Infer `岗位方向` from the job title and JD responsibilities, not just from broad skill defaults. Use `其他` only when no more specific label fits after reading the JD.
+- Write `申请门槛` as `低 / 中 / 高 + 一句简短说明` so readers know why the level was assigned, for example `申请门槛：中，需要基础相关经验，但不是强资历岗`.
+- Write `中国可投把握` as `高 / 中 / 待确认 + 一句简短说明` so readers know the evidence behind the judgment, for example `中国可投把握：高，岗位直接面向中国团队或中国本地招聘`.
 
 Top-level title rules:
 
@@ -141,8 +143,8 @@ Top-level title rules:
 工作方式：中国本地办公 / 混合办公 / 全球远程 / APAC 远程 / 中国可投待确认
 经验要求：入门 / 1-3 年 / 3-5 年 / 高级 / 不明确
 语言要求：中文 / 英文 / 双语 / 其他 / 不明确
-申请门槛：低 / 中 / 高
-中国可投把握：高 / 中 / 待确认
+申请门槛：低 / 中 / 高 + 一句简短说明
+中国可投把握：高 / 中 / 待确认 + 一句简短说明
 时差判断：
 适合谁：
 注意事项：
@@ -165,7 +167,7 @@ Top-level title rules:
 这些岗位的筛选时间是 YYYY-MM-DD，申请前仍需以岗位页面最新信息为准。
 ```
 
-If a near-match replaces an unavailable category, state the replacement reason in `注意事项` using applicant-facing wording. Keep `申请门槛` and `中国可投把握` as practical labels, not mathematical scores. Never output a job whose direct link was not verified unless the user explicitly allows unverified leads; if allowed, still do not add `链接核验`, and instead state the practical limitation in `注意事项`, for example `链接状态需投递前再次确认`.
+If a near-match replaces an unavailable category, state the replacement reason in `注意事项` using applicant-facing wording. Keep `申请门槛` and `中国可投把握` as practical labels, not mathematical scores. The short explanation after each label must stay concise and reader-facing, not a dump of JD details. Never output a job whose direct link was not verified unless the user explicitly allows unverified leads; if allowed, still do not add `链接核验`, and instead state the practical limitation in `注意事项`, for example `链接状态需投递前再次确认`.
 
 ## Final Jobs JSON Schema
 
@@ -183,7 +185,9 @@ Before rendering Markdown, create a temporary JSON file containing the final job
     "experience": "1-3 年",
     "language": "英文",
     "application_barrier": "中",
+    "application_barrier_note": "需要基础客服或 SaaS 支持经验，但不是重资历岗",
     "china_applicability": "中",
+    "china_applicability_note": "面向 APAC 远程，但投递前确认是否支持中国大陆签约",
     "timezone_judgment": "面向 APAC，和北京时间协作可行",
     "best_for": "适合英语较好、有客服或 SaaS 支持经验的人",
     "notes": "投递前确认是否支持中国大陆远程签约、税务和合同形式",
@@ -193,4 +197,4 @@ Before rendering Markdown, create a temporary JSON file containing the final job
 ]
 ```
 
-`company` and `source` are used for `seen_jobs.py append`; the rendered Markdown uses `company_platform`.
+`company` and `source` are used for `seen_jobs.py append`; the rendered Markdown uses `company_platform`. `application_barrier` and `china_applicability` keep the normalized base label, while `application_barrier_note` and `china_applicability_note` provide the short reader-facing explanation rendered after the label.

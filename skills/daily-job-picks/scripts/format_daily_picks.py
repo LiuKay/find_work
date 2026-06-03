@@ -25,6 +25,11 @@ REQUIRED_FIELDS = [
     "url",
 ]
 
+OPTIONAL_EXPLANATION_FIELDS = [
+    "application_barrier_note",
+    "china_applicability_note",
+]
+
 JOB_GROUPS = {"外企中国岗位", "外企 APAC 岗位", "海外远程岗位", "中国可投待确认"}
 WORK_MODES = {"中国本地办公", "混合办公", "全球远程", "APAC 远程", "中国可投待确认"}
 EXPERIENCE = {"入门", "1-3 年", "3-5 年", "高级", "不明确"}
@@ -59,6 +64,9 @@ def validate_job(job: dict[str, Any], index: int) -> list[str]:
         errors.append(f"job {index}: invalid application_barrier {job['application_barrier']}")
     if job.get("china_applicability") and job["china_applicability"] not in CHINA_APPLICABILITY:
         errors.append(f"job {index}: invalid china_applicability {job['china_applicability']}")
+    for field in OPTIONAL_EXPLANATION_FIELDS:
+        if field in job and not isinstance(job.get(field), str):
+            errors.append(f"job {index}: {field} must be a string when provided")
     url = str(job.get("url", ""))
     if not (url.startswith("https://") or url.startswith("http://")):
         errors.append(f"job {index}: url must start with http(s)")
@@ -67,6 +75,14 @@ def validate_job(job: dict[str, Any], index: int) -> list[str]:
 
 def line(label: str, value: Any) -> str:
     return f"{label}：{str(value).strip()}"
+
+
+def label_with_note(value: Any, note: Any) -> str:
+    base = str(value).strip()
+    extra = str(note or "").strip()
+    if not extra:
+        return base
+    return f"{base}，{extra}"
 
 
 def default_title(date: str, mode: str, target: str) -> str:
@@ -115,8 +131,8 @@ def render(
                 line("工作方式", job["work_mode"]),
                 line("经验要求", job["experience"]),
                 line("语言要求", job["language"]),
-                line("申请门槛", job["application_barrier"]),
-                line("中国可投把握", job["china_applicability"]),
+                line("申请门槛", label_with_note(job["application_barrier"], job.get("application_barrier_note", ""))),
+                line("中国可投把握", label_with_note(job["china_applicability"], job.get("china_applicability_note", ""))),
                 line("时差判断", job["timezone_judgment"]),
                 line("适合谁", job["best_for"]),
                 line("注意事项", job["notes"]),
