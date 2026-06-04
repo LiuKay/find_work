@@ -166,6 +166,7 @@ function parseJobBlock(block, pick, index) {
   const threshold = plainMarkdown(fields["申请门槛"] || "");
   const fit = plainMarkdown(fields["适合谁"] || "");
   const notes = plainMarkdown(fields["注意事项"] || "");
+  const timezone = plainMarkdown(fields["时差判断"] || "");
   const link = extractMarkdownUrl(fields["链接"] || "");
 
   return {
@@ -182,6 +183,7 @@ function parseJobBlock(block, pick, index) {
     experience,
     language,
     confidence,
+    timezone,
     threshold,
     fit,
     notes,
@@ -296,6 +298,108 @@ function latestIssueSummary(jobs) {
   };
 }
 
+function extractPickIntro(markdown) {
+  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const firstJobIndex = lines.findIndex((line) => /^###\s+\d+\.\s+岗位名称[：:]\s*/.test(line));
+  const introLines = firstJobIndex === -1 ? lines : lines.slice(0, firstJobIndex);
+  const contentLines = introLines.filter((line, index) => !(index === 0 && /^#\s+/.test(line)));
+  return markdownToHtml(contentLines.join("\n").trim());
+}
+
+function summarizePickJobs(jobs) {
+  if (!jobs.length) {
+    return {
+      countText: "本期岗位整理中",
+      fitText: "岗位结构化信息暂未生成，请直接阅读正文。",
+      directions: [],
+      workModes: [],
+      confidence: [],
+    };
+  }
+
+  const directions = uniqueValues(jobs.map((job) => job.direction)).slice(0, 4);
+  const workModes = uniqueValues(jobs.map((job) => job.workMode)).slice(0, 3);
+  const confidence = uniqueValues(
+    jobs
+      .map((job) => {
+        const match = `${job.confidence}`.match(/^(高|中|低|不明确)/);
+        return match ? match[1] : "";
+      })
+      .filter(Boolean)
+  ).slice(0, 3);
+  const lowerBarrierCount = jobs.filter((job) => /低|入门|1-3/.test(`${job.threshold} ${job.experience}`)).length;
+  const fitText = [
+    workModes.length ? `工作方式覆盖 ${workModes.join(" / ")}` : "",
+    confidence.length ? `中国可投把握以 ${confidence.join(" / ")} 为主` : "",
+    lowerBarrierCount ? `其中 ${lowerBarrierCount} 个岗位更适合先投先看` : "整体更适合按方向快速筛选",
+  ]
+    .filter(Boolean)
+    .join("，");
+
+  return {
+    countText: `本期 ${jobs.length} 个岗位`,
+    fitText: fitText || "先看摘要，再进入适合自己的岗位区块。",
+    directions,
+    workModes,
+    confidence,
+  };
+}
+
+function renderJobPills(items) {
+  return items
+    .filter(Boolean)
+    .map((item) => `<span>${escapeHtml(item)}</span>`)
+    .join("");
+}
+
+function renderSummaryItem(label, value) {
+  if (!value) return "";
+  return `<div class="job-summary-item"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`;
+}
+
+function renderDetailRow(label, value, className = "") {
+  if (!value) return "";
+  const extraClass = className ? ` ${className}` : "";
+  return `<div class="job-detail-row${extraClass}"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`;
+}
+
+function renderJumpLink(job) {
+  return `<a href="#job-${job.number}"><span>${escapeHtml(String(job.number).padStart(2, "0"))}</span>${escapeHtml(job.title)}</a>`;
+}
+
+function renderJobSection(job) {
+  const companyLine = job.company;
+  const directLink = job.link
+    ? `<a class="job-apply-link" href="${escapeHtml(job.link)}" rel="noopener noreferrer" target="_blank">查看原岗位</a>`
+    : "";
+
+  return `<section class="job-section" id="job-${job.number}" aria-labelledby="${escapeHtml(job.id)}-title">
+    <div class="job-section-head">
+      <div class="job-section-title">
+        <div class="job-number">岗位 ${escapeHtml(String(job.number).padStart(2, "0"))}</div>
+        <h2 id="${escapeHtml(job.id)}-title">${escapeHtml(job.title)}</h2>
+        ${companyLine ? `<p>${escapeHtml(companyLine)}</p>` : ""}
+      </div>
+      ${directLink ? `<div class="job-section-actions">${directLink}</div>` : ""}
+    </div>
+    <dl class="job-summary-grid" aria-label="岗位速览">
+      ${renderSummaryItem("岗位方向", job.direction)}
+      ${renderSummaryItem("工作方式", job.workMode)}
+      ${renderSummaryItem("经验要求", job.experience)}
+      ${renderSummaryItem("语言要求", job.language)}
+    </dl>
+    <dl class="job-judgement-grid" aria-label="投递判断">
+      ${renderDetailRow("申请门槛", job.threshold, "job-detail-emphasis")}
+      ${renderDetailRow("中国可投把握", job.confidence, "job-detail-strong")}
+    </dl>
+    <dl class="job-detail-stack" aria-label="补充说明">
+      ${renderDetailRow("适合谁", job.fit)}
+      ${renderDetailRow("注意事项", job.notes)}
+      ${renderDetailRow("时差判断", job.timezone)}
+    </dl>
+  </section>`;
+}
+
 function pageTemplate({ title, description, body, canonicalPath = "/", scripts = [] }) {
   const scriptTags = scripts
     .map((script) => `<script src="${escapeHtml(script)}" defer></script>`)
@@ -343,14 +447,63 @@ function writePage(relativePath, html) {
 }
 
 function renderPickPage(pick) {
+  const jobs = extractJobs(pick).map((job) => ({ ...job, issueTag: issueTag(pick.title) }));
+  const introHtml = extractPickIntro(pick.markdown);
+  const summary = summarizePickJobs(jobs);
+  const jumpLinks = jobs.slice(0, 12).map(renderJumpLink).join("");
+  const summaryTags = renderJobPills(summary.directions);
+  const modeTags = renderJobPills(summary.workModes);
+  const confidenceTags = renderJobPills(summary.confidence);
+
+  if (!jobs.length) {
+    return pageTemplate({
+      title: `${pick.title} | Find Work`,
+      description: `${pick.date} 的外企和海外远程岗位精选。`,
+      canonicalPath: `/picks/${pick.slug}/`,
+      body: `<main class="reading-layout">
+  <a class="back-link" href="/archive/">← 查看全部归档</a>
+  <article class="pick-article">
+    ${pick.html}
+  </article>
+</main>`,
+    });
+  }
+
   return pageTemplate({
     title: `${pick.title} | Find Work`,
     description: `${pick.date} 的外企和海外远程岗位精选。`,
     canonicalPath: `/picks/${pick.slug}/`,
-    body: `<main class="reading-layout">
+    body: `<main class="reading-layout detail-layout">
   <a class="back-link" href="/archive/">← 查看全部归档</a>
-  <article class="pick-article">
-    ${pick.html}
+  <section class="pick-overview" aria-labelledby="pick-title">
+    <div class="pick-overview-main">
+      <div class="section-kicker">每日精选</div>
+      <h1 id="pick-title">${escapeHtml(pick.title)}</h1>
+      <div class="pick-overview-meta">
+        <strong>${escapeHtml(summary.countText)}</strong>
+        <span>${escapeHtml(pick.date)}</span>
+      </div>
+      <p class="pick-overview-note">${escapeHtml(summary.fitText)}</p>
+      ${summaryTags ? `<div class="pick-overview-pills" aria-label="主要方向">${summaryTags}</div>` : ""}
+      ${introHtml ? `<div class="pick-overview-intro">${introHtml}</div>` : ""}
+    </div>
+    <aside class="pick-overview-side" aria-label="本期摘要">
+      <div class="pick-overview-panel">
+        <h2>先看这一期有什么</h2>
+        ${modeTags ? `<div class="pick-overview-group"><span>工作方式</span><div class="pick-overview-pills">${modeTags}</div></div>` : ""}
+        ${confidenceTags ? `<div class="pick-overview-group"><span>可投把握</span><div class="pick-overview-pills">${confidenceTags}</div></div>` : ""}
+        <p class="trust-note">申请前请以原岗位页面为准，尤其注意地域、语言和年限要求是否发生更新。</p>
+      </div>
+      <nav class="pick-jump-nav" aria-label="跳转到岗位">
+        <h2>快速跳转</h2>
+        <div class="pick-jump-list">
+          ${jumpLinks}
+        </div>
+      </nav>
+    </aside>
+  </section>
+  <article class="pick-detail-list" aria-label="岗位详情">
+    ${jobs.map(renderJobSection).join("\n")}
   </article>
 </main>`,
   });
