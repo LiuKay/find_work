@@ -158,8 +158,8 @@ main {
   }
 
   .job-apply-link:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 24px rgba(32, 92, 55, 0.22);
+    background: color-mix(in oklch, var(--accent) 18%, var(--paper));
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 26%, transparent);
   }
 }
 
@@ -724,26 +724,67 @@ time {
   line-height: 1.5;
 }
 
+.job-company-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-top: 4px;
+}
+
+.job-company-line {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  flex: 1 1 320px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.job-company-label {
+  color: color-mix(in oklch, var(--muted) 88%, var(--paper));
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 4px 7px;
+  background: oklch(96% 0.013 83);
+  border-radius: 999px;
+}
+
+.job-company-value {
+  color: color-mix(in oklch, var(--ink) 84%, var(--muted));
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
 .job-section-actions {
   flex: 0 0 auto;
 }
 
 .job-apply-link {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 32px;
   align-items: center;
   justify-content: center;
-  padding: 0 16px;
-  color: var(--paper);
+  padding: 0 11px;
+  color: var(--accent-strong);
   font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
   text-decoration: none;
-  background: var(--accent-strong);
-  border-radius: var(--radius-sm);
-  transition-property: transform, box-shadow;
+  background: color-mix(in oklch, var(--accent) 10%, var(--paper));
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--accent) 20%, transparent);
+  transition-property: background-color, color, box-shadow;
   transition-duration: 160ms;
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.job-apply-link:active {
+  transform: none;
 }
 
 .job-summary-grid,
@@ -1559,6 +1600,28 @@ time {
   .job-section-title p {
     font-size: 12px;
     line-height: 1.35;
+  }
+
+  .job-company-row {
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .job-company-line {
+    gap: 6px;
+  }
+
+  .job-company-label {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+
+  .job-company-value {
+    font-size: 12px;
+  }
+
+  .job-section-actions {
+    width: 100%;
   }
 
   .job-summary-grid {

@@ -372,15 +372,25 @@ function renderJobSection(job) {
   const directLink = job.link
     ? `<a class="job-apply-link" href="${escapeHtml(job.link)}" rel="noopener noreferrer" target="_blank">查看原岗位</a>`
     : "";
+  const metaRow =
+    companyLine || directLink
+      ? `<div class="job-company-row">
+        ${
+          companyLine
+            ? `<p class="job-company-line"><span class="job-company-label">平台/公司</span><span class="job-company-value">${escapeHtml(companyLine)}</span></p>`
+            : ""
+        }
+        ${directLink ? `<div class="job-section-actions">${directLink}</div>` : ""}
+      </div>`
+      : "";
 
   return `<section class="job-section" id="job-${job.number}" aria-labelledby="${escapeHtml(job.id)}-title">
     <div class="job-section-head">
       <div class="job-section-title">
         <div class="job-number">岗位 ${escapeHtml(String(job.number).padStart(2, "0"))}</div>
         <h2 id="${escapeHtml(job.id)}-title">${escapeHtml(job.title)}</h2>
-        ${companyLine ? `<p>${escapeHtml(companyLine)}</p>` : ""}
+        ${metaRow}
       </div>
-      ${directLink ? `<div class="job-section-actions">${directLink}</div>` : ""}
     </div>
     <dl class="job-summary-grid" aria-label="岗位速览">
       ${renderSummaryItem("岗位方向", job.direction)}
