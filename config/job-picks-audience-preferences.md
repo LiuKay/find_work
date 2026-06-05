@@ -2,6 +2,11 @@
 
 这个文件用于覆盖 `daily-job-picks` skill 的默认公共精选倾向。它不是发布内容，也不是代码配置，直接按群友投票和人工判断维护即可。
 
+## 可复用定向标准
+
+- MKT 去销售 / 去 B2B：`config/job-picks-mkt-no-sales-b2b.md`
+- 当用户说“筛 mkt 岗位”“按 mkt 标准”“按照上面的 mkt 要求”时，优先读取这份 MKT 标准；不要再把销售、BD、Sales Engineer、Sales Enablement、B2B SaaS、ABM、enterprise demand generation 岗位放进 MKT 定向精选。
+
 ## 本期总数
 
 建议筛选 8 个岗位。质量不足时可以少于 8 个，不要为了凑数放入弱匹配、坏链、疑似不可投或不适合中国大陆申请人的岗位。
