@@ -91,3 +91,7 @@ date	url	title	company	reason	replacement_url
 2026-06-06	https://jobs.smartrecruiters.com/RenesasElectronics/744000117606947-supply-chain-managment-specialist-scm-	Supply Chain Management Specialist（SCM）	Renesas Electronics	page shows job has expired during finalist review	
 2026-06-06	https://apply.workable.com/hospitable/j/21353CF73D	Customer Support Advocate (APAC - Remote)	Hospitable	direct page redirects to not found during finalist review	
 2026-06-06	https://job-boards.greenhouse.io/ideo/jobs/7540797	Office & Operations Coordinator (Contractor)	IDEO	direct page redirects to careers list during finalist review	
+2026-06-06	https://careers.marriott.com/marketing-communications-manager-%E5%B8%82%E5%9C%BA%E4%BC%A0%E8%AE%AF%E7%BB%8F%E7%90%86/job/CAEE56CE9118969322B38D6EB6E51FC4	Marketing & Communications Manager 市场传讯经理	Marriott International	link_check_http_404	
+2026-06-06	https://careers.marriott.com/dir-marketing-communications/job/56C2FD02F72A709809E68FF1BE3CA2AC	Dir-Marketing Communications	Marriott International	link_check_http_404	
+2026-06-06	https://careers.marriott.com/executive-communications/job/4DC6EDDCC25A3D15D676CCFDEEABCFA2	Executive, Communications	Marriott International	link_check_http_404	
+2026-06-06	https://jobs.smartrecruiters.com/HMGroup/744000106437850-head-of-merchandising-china	Head of Merchandising, China	H&M Group	link_check_possible_expired_marker	
