@@ -30,8 +30,8 @@ OPTIONAL_EXPLANATION_FIELDS = [
     "china_applicability_note",
 ]
 
-JOB_GROUPS = {"外企中国岗位", "外企 APAC 岗位", "海外远程岗位", "中国可投待确认"}
-WORK_MODES = {"中国本地办公", "混合办公", "全球远程", "APAC 远程", "中国可投待确认"}
+JOB_GROUPS = {"外企中国岗位", "外企 APAC 岗位", "海外远程岗位", "中国可投待确认", "中国本地远程岗位"}
+WORK_MODES = {"中国本地办公", "混合办公", "全球远程", "APAC 远程", "中国可投待确认", "居家办公"}
 EXPERIENCE = {"入门", "1-3 年", "3-5 年", "高级", "不明确"}
 LANGUAGE = {"中文", "英文", "双语", "其他", "不明确"}
 LEVELS = {"低", "中", "高"}
