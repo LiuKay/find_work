@@ -6,9 +6,9 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
-import tempfile
 from pathlib import Path
+
+from link_check import Candidate, check_candidate
 
 
 REQUIRED_LABELS = [
@@ -121,26 +121,10 @@ def extract_link_check_jobs(path: Path) -> list[dict[str, str]]:
 
 
 def run_link_checks(path: Path) -> tuple[list[str], list[dict[str, str]]]:
-    script = Path(__file__).with_name("link_check.py")
     jobs = extract_link_check_jobs(path)
     if not jobs:
         return ["no links available for link check"], []
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json", delete=False) as fh:
-        json.dump(jobs, fh, ensure_ascii=False)
-        temp_path = Path(fh.name)
-    try:
-        proc = subprocess.run(
-            ["python3", "-B", str(script), "--input", str(temp_path)],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-    finally:
-        temp_path.unlink(missing_ok=True)
-    try:
-        results = json.loads(proc.stdout)
-    except json.JSONDecodeError:
-        return [f"link_check.py did not return JSON: {proc.stderr or proc.stdout}"], []
+    results = [check_candidate(Candidate(url=item["url"], title=item["title"], company=item["company"]), 12.0) for item in jobs]
     errors = []
     bad_link_candidates = []
     for idx, item in enumerate(results, 1):

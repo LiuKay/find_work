@@ -48,6 +48,63 @@ def html_title(text: str) -> str:
     return compact(re.sub(r"<[^>]+>", " ", match.group(1))) if match else ""
 
 
+def body_text(text: str, limit: int = 180_000) -> str:
+    sample = text[:limit]
+    sample = re.sub(r"<script\b[^>]*>.*?</script>", " ", sample, flags=re.I | re.S)
+    sample = re.sub(r"<style\b[^>]*>.*?</style>", " ", sample, flags=re.I | re.S)
+    return compact(re.sub(r"<[^>]+>", " ", sample))
+
+
+def visible_lines(text: str, limit: int = 180_000) -> list[str]:
+    sample = text[:limit]
+    sample = re.sub(r"<script\b[^>]*>.*?</script>", "\n", sample, flags=re.I | re.S)
+    sample = re.sub(r"<style\b[^>]*>.*?</style>", "\n", sample, flags=re.I | re.S)
+    sample = re.sub(r"<[^>]+>", "\n", sample)
+    return [compact(line) for line in sample.splitlines() if compact(line)]
+
+
+def label_value(text: str, label: str) -> str:
+    lines = visible_lines(text)
+    target = f"{label}:".casefold()
+    for idx, line in enumerate(lines):
+        if line.casefold().startswith(target):
+            remainder = compact(line.split(":", 1)[1]) if ":" in line else ""
+            if remainder:
+                return remainder
+            if idx + 1 < len(lines):
+                return lines[idx + 1]
+
+    raw_patterns = [
+        rf"{re.escape(label)}\s*:\s*</[^>]+>\s*([^<\n]+)",
+        rf"{re.escape(label)}\s*:\s*([^<\n]+)",
+    ]
+    for pattern in raw_patterns:
+        match = re.search(pattern, text, re.I | re.S)
+        if match:
+            value = compact(match.group(1))
+            if value:
+                return value
+
+    return ""
+
+
+def clean_company_name(value: str) -> str:
+    cleaned = compact(value)
+    cleaned = re.sub(r"\s+careers$", "", cleaned, flags=re.I)
+    return cleaned
+
+
+def trim_at_markers(value: str, markers: list[str]) -> str:
+    cleaned = compact(value)
+    for marker in markers:
+        pattern = re.compile(rf"\b{re.escape(marker)}\b", re.I)
+        match = pattern.search(cleaned)
+        if match and match.start() > 0:
+            cleaned = compact(cleaned[: match.start()])
+            break
+    return cleaned
+
+
 def json_ld_jobs(text: str) -> list[dict[str, Any]]:
     jobs: list[dict[str, Any]] = []
     for match in re.finditer(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', text, re.I | re.S):
@@ -137,12 +194,25 @@ def extract(url: str, timeout: float) -> dict[str, Any]:
         result["title"] = og_title or result["page_title"]
     if not result["company"]:
         site_name = meta_content(text, "og:site_name")
-        result["company"] = site_name
+        result["company"] = clean_company_name(site_name)
     if not result["apply_url"]:
         result["apply_url"] = final_url
 
-    body_text = compact(re.sub(r"<[^>]+>", " ", text[:120_000]))
-    if "apply" not in body_text.casefold() and "application" not in body_text.casefold():
+    visible = body_text(text)
+    if not result["location"]:
+        result["location"] = label_value(visible, "Location")
+    if not result["date_posted"]:
+        result["date_posted"] = label_value(visible, "Posted")
+    result["location"] = trim_at_markers(result["location"], ["Role Overview", "Key Responsibilities", "Posted", "Apply"])
+    result["date_posted"] = trim_at_markers(result["date_posted"], ["Apply", "Share", "Role Overview"])
+    if not result["company"]:
+        title_company = result["page_title"].split("|", 1)[-1].strip() if "|" in result["page_title"] else ""
+        result["company"] = clean_company_name(title_company)
+    if not result["title"]:
+        h1_match = re.search(r"<h1[^>]*>(.*?)</h1>", text, re.I | re.S)
+        if h1_match:
+            result["title"] = compact(re.sub(r"<[^>]+>", " ", h1_match.group(1)))
+    if "apply" not in visible.casefold() and "application" not in visible.casefold():
         result["warnings"].append("no obvious apply text")
     if not result["title"]:
         result["warnings"].append("no title extracted")

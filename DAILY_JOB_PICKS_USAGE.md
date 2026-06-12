@@ -38,6 +38,7 @@ New project-local references:
 - [audience-preferences-template.md](/Users/kaybee/Documents/github/find_work/skills/daily-job-picks/references/audience-preferences-template.md)
 - [implementation-contracts.md](/Users/kaybee/Documents/github/find_work/skills/daily-job-picks/references/implementation-contracts.md)
 - [migration-plan.md](/Users/kaybee/Documents/github/find_work/skills/daily-job-picks/references/migration-plan.md)
+- [next-step-improvements.md](/Users/kaybee/Documents/github/find_work/skills/daily-job-picks/references/next-step-improvements.md)
 
 New project-local scripts:
 
@@ -210,6 +211,20 @@ python3 skills/daily-job-picks/scripts/validate_report.py \
 ```
 
 The updated report validator will now preserve more actionable link-failure reasons from `link_check.py`.
+
+## Known Remaining Gaps
+
+The current local skill is improved, but not finished.
+
+The remaining follow-up directions are documented in:
+
+- [next-step-improvements.md](/Users/kaybee/Documents/github/find_work/skills/daily-job-picks/references/next-step-improvements.md)
+
+The highest-priority follow-up items are:
+
+- public roundup query expansion still needs better multi-profile coverage
+- ATS and report-validation network behavior still needs one unified execution contract
+- step 15 still has too much manual recovery when scripts disagree about transport or extraction
 
 ### 12. Append accepted jobs to the seen index
 

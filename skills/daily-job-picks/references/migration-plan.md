@@ -45,6 +45,20 @@ During the documentation-only stage:
 - the agent should still prefer the documented structure when possible
 - conservative rejection is better than improvised optimism
 
+## Next Follow-Up After This Phase
+
+The first implementation pass and second-round screening test surfaced a smaller second phase that should be treated as follow-up hardening, not a redesign.
+
+That follow-up is documented in:
+
+- `next-step-improvements.md`
+
+The main remaining concerns are:
+
+- public-mode query generation still needs full multi-profile coverage
+- finalist-gate scripts still need one unified live-network execution contract
+- ATS extraction mismatch reporting still needs more structured categories
+
 ## Non-Goals During Migration
 
 - no new service

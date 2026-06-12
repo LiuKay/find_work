@@ -70,14 +70,20 @@ def selected_profiles(config: dict[str, Any], mode: str, requested_terms: list[s
 
 
 def profile_keywords(profiles: list[dict[str, Any]], requested_terms: list[str], matched_profile: bool) -> list[str]:
-    if not profiles or not matched_profile:
+    if not profiles:
+        return requested_terms
+    if not matched_profile and requested_terms:
         return requested_terms
     keywords: list[str] = []
     for profile in profiles:
         for keyword in profile.get("keywords", []):
             if isinstance(keyword, str) and keyword.strip() and keyword not in keywords:
                 keywords.append(keyword)
-    return keywords
+        if not keywords:
+            for direction in profile.get("directions", []):
+                if isinstance(direction, str) and direction.strip() and direction not in keywords:
+                    keywords.append(direction)
+    return keywords or requested_terms
 
 
 def build_queries(sources: list[dict[str, Any]], keywords: list[str], limit_per_source: int) -> list[dict[str, Any]]:
