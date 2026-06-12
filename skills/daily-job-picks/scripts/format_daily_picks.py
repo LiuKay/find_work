@@ -12,6 +12,7 @@ from typing import Any
 REQUIRED_FIELDS = [
     "title",
     "company_platform",
+    "company",
     "job_group",
     "job_direction",
     "work_mode",
@@ -23,6 +24,7 @@ REQUIRED_FIELDS = [
     "best_for",
     "notes",
     "url",
+    "source",
 ]
 
 OPTIONAL_EXPLANATION_FIELDS = [
@@ -30,12 +32,39 @@ OPTIONAL_EXPLANATION_FIELDS = [
     "china_applicability_note",
 ]
 
-JOB_GROUPS = {"外企中国岗位", "外企 APAC 岗位", "海外远程岗位", "中国可投待确认", "中国本地远程岗位"}
-WORK_MODES = {"中国本地办公", "混合办公", "全球远程", "APAC 远程", "中国可投待确认", "居家办公"}
+JOB_GROUPS = {"外企中国岗位", "外企 APAC 岗位", "海外远程岗位", "中国可投待确认"}
+JOB_DIRECTIONS = {
+    "客服",
+    "运营",
+    "内容",
+    "本地化",
+    "销售支持",
+    "技术",
+    "技术支持",
+    "QA",
+    "数据",
+    "AI Trainer",
+    "产品",
+    "项目管理",
+    "需求分析",
+    "系统分析",
+    "实施",
+    "解决方案",
+    "HR",
+    "供应链",
+    "销售",
+    "合同工",
+    "兼职",
+    "其他",
+}
+WORK_MODES = {"中国本地办公", "混合办公", "全球远程", "APAC 远程", "中国可投待确认"}
 EXPERIENCE = {"入门", "1-3 年", "3-5 年", "高级", "不明确"}
 LANGUAGE = {"中文", "英文", "双语", "其他", "不明确"}
 LEVELS = {"低", "中", "高"}
 CHINA_APPLICABILITY = {"高", "中", "待确认"}
+CHINA_CONFIRM_KEYWORDS = ("确认", "中国大陆", "签约", "合同", "税务", "地点限制", "雇佣")
+AI_TRAINER_DIRECTIONS = {"AI Trainer"}
+AI_TRAINER_TITLE_HINTS = ("trainer", "annot", "rater", "evaluator", "rlhf")
 
 
 def load_jobs(path: Path) -> list[dict[str, Any]]:
@@ -54,6 +83,8 @@ def validate_job(job: dict[str, Any], index: int) -> list[str]:
             errors.append(f"job {index}: missing {field}")
     if job.get("job_group") and job["job_group"] not in JOB_GROUPS:
         errors.append(f"job {index}: invalid job_group {job['job_group']}")
+    if job.get("job_direction") and job["job_direction"] not in JOB_DIRECTIONS:
+        errors.append(f"job {index}: invalid job_direction {job['job_direction']}")
     if job.get("work_mode") and job["work_mode"] not in WORK_MODES:
         errors.append(f"job {index}: invalid work_mode {job['work_mode']}")
     if job.get("experience") and job["experience"] not in EXPERIENCE:
@@ -67,6 +98,23 @@ def validate_job(job: dict[str, Any], index: int) -> list[str]:
     for field in OPTIONAL_EXPLANATION_FIELDS:
         if field in job and not isinstance(job.get(field), str):
             errors.append(f"job {index}: {field} must be a string when provided")
+    application_note = str(job.get("application_barrier_note", "")).strip()
+    china_note = str(job.get("china_applicability_note", "")).strip()
+    if not application_note:
+        errors.append(f"job {index}: application_barrier_note is required")
+    if not china_note:
+        errors.append(f"job {index}: china_applicability_note is required")
+    if str(job.get("china_applicability", "")).strip() == "待确认":
+        if not any(keyword in china_note for keyword in CHINA_CONFIRM_KEYWORDS):
+            errors.append(f"job {index}: china_applicability_note for 待确认 must mention applicant-facing confirmation")
+    if str(job.get("job_group", "")).strip() == "海外远程岗位" and str(job.get("work_mode", "")).strip() == "中国本地办公":
+        errors.append(f"job {index}: 海外远程岗位 cannot use 中国本地办公")
+    direction = str(job.get("job_direction", "")).strip()
+    title = str(job.get("title", "")).casefold()
+    is_ai_trainer = direction in AI_TRAINER_DIRECTIONS or any(hint in title for hint in AI_TRAINER_TITLE_HINTS)
+    if is_ai_trainer and str(job.get("china_applicability", "")).strip() == "高":
+        if not any(keyword in china_note for keyword in ("中国", "大陆", "China", "中国团队", "中国本地")):
+            errors.append(f"job {index}: AI Trainer high china_applicability requires explicit China evidence in note")
     url = str(job.get("url", ""))
     if not (url.startswith("https://") or url.startswith("http://")):
         errors.append(f"job {index}: url must start with http(s)")

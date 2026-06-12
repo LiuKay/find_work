@@ -145,14 +145,26 @@ def run_link_checks(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     bad_link_candidates = []
     for idx, item in enumerate(results, 1):
         if not item.get("ok_basic"):
-            warnings = "; ".join(item.get("warnings") or [])
-            errors.append(f"job {idx}: link_check failed for {item.get('url')}: {warnings}")
+            warning_list = item.get("warnings") or []
+            warnings = "; ".join(warning_list)
+            page_type = str(item.get("suspected_page_type", "")).strip()
+            details: list[str] = []
+            if warnings:
+                details.append(warnings)
+            if page_type:
+                details.append(f"page_type={page_type}")
+            if item.get("bad_marker_hit"):
+                details.append(f"bad_marker={item.get('bad_marker_hit')}")
+            if item.get("final_url_changed"):
+                details.append("final_url_changed=true")
+            detail_text = "; ".join(details) or f"status {item.get('status', '')}".strip()
+            errors.append(f"job {idx}: link_check failed for {item.get('url')}: {detail_text}")
             bad_link_candidates.append(
                 {
                     "url": str(item.get("url", "")),
                     "title": str(item.get("title", "")),
                     "company": str(item.get("company", "")),
-                    "reason": warnings or f"status {item.get('status', '')}".strip(),
+                    "reason": detail_text,
                 }
             )
     return errors, bad_link_candidates

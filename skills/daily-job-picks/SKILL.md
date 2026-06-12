@@ -56,6 +56,30 @@ Use bundled scripts for deterministic bookkeeping and output. Run them from the 
 
 These scripts do not decide whether a job is good or China-applicable. The agent still owns source search, JD interpretation, risk judgment, time-zone judgment, and final selection.
 
+## Decision Architecture
+
+This skill is being documented toward a `single-model-first` workflow. The design goal is not to replace model judgment, but to narrow where judgment is allowed and force the risky parts into structured intermediate artifacts.
+
+Principles:
+
+- Prefer one ordinary model plus deterministic checks over a stronger model making free-form decisions.
+- Require structured evidence before a keep/reject judgment on risky candidates.
+- Restrict high-risk classifications and final summaries to enumerated labels plus short notes.
+- Use scripts for enum validation, consistency gates, duplicate checks, and obvious rule failures.
+- Use the model for page reading, evidence extraction, narrow judgment calls, and applicant-facing wording.
+
+Documentation precedence for this decision architecture:
+
+1. `SKILL.md`
+2. `references/candidate-review-card.md`
+3. `references/classification-rubric.md`
+4. `references/final-link-review-checklist.md`
+5. `references/audience-preferences-template.md`
+6. `references/implementation-contracts.md`
+7. `references/migration-plan.md`
+
+The current bundled scripts only implement part of this design. Until the follow-up implementation lands, these documents are the source of truth for how the next version must behave.
+
 ## Modes
 
 - Public roundup mode: Use when the user asks for a daily selection for friends, a group, a newsletter, or people from multiple industries. Cover several job directions so readers can self-pick.
@@ -83,19 +107,32 @@ These scripts do not decide whether a job is good or China-applicable. The agent
 9. If subagents are available and the requested search is broad, use the dispatcher workflow in `references/multi-agent-workflow.md`: the main agent assigns distinct source/category lanes to child agents, then owns deduplication, final screening, writing, and final link validation. If subagents are unavailable or the request is narrow, run the same lanes sequentially.
 10. Search live job sources. Because job listings change frequently, always browse the web for current listings. Use enabled TOML source groups as the search lanes and do not use disabled source groups.
 11. Build a candidate pool larger than the requested count. For each promising candidate, run `scripts/seen_jobs.py check --title ... --company ... --url ...` and `scripts/bad_links.py check --title ... --company ... --url ...`; remove duplicates and previously reported bad links before spending more review time.
-12. Reject jobs that fail the hard rules:
+12. Before applying hard-rule decisions, create a structured candidate review card for every serious candidate. Follow `references/candidate-review-card.md` exactly:
+   - Extract direct evidence for location, remote status, time-zone fit, China-eligibility signals, employment structure, risk signals, and application-path visibility.
+   - Fill the required enums and evidence fields before writing `reject`, `keep`, or `keep_with_confirmation`.
+   - Do not allow a free-form narrative review to substitute for the structured card.
+   - Only candidates that would pass `validate_candidate_review.py` in `references/implementation-contracts.md` may continue to finalist review.
+13. Reject jobs that fail the hard rules. The hard rules apply through the candidate review card and must not be softened by style or intuition:
    - Overseas jobs must be remote.
    - Do not select roles with China time-zone incompatibility over 5 hours unless the user explicitly requested them.
    - Do not select generic overseas AI Trainer, data annotation, rater, evaluator, or language-model training contractor roles for Mandarin, Simplified Chinese, or Chinese unless the job page explicitly lists mainland China/China as an accepted work location or hiring jurisdiction. Chinese-language ability alone is not evidence that China-based applicants can apply; many such roles target overseas Chinese speakers.
    - Do not select obvious scams, gray-market roles, high-risk crypto projects, gambling, adult industry, paid-to-apply jobs, brush-order work, pure pyramid/referral schemes, or vague high-pay roles with unclear company identity.
    - Do not select platform homepages, search pages, company job-board landing pages, category pages, expired pages, pages that no longer show the selected role, or pages that open but no longer expose the job description and application path to a normal reader.
-13. Apply TOML `screening_rules`, project-level audience preferences, and `link_rules` as practical screening inputs, but never use them to weaken the hard rules above.
-14. For Greenhouse, Lever, Ashby, Workable, SmartRecruiters, and company career URLs, run `scripts/ats_extract.py <url>` when shell network access is available. Use extracted title/company/location as a consistency check; if it disagrees with the candidate, open the page and resolve the mismatch before proceeding.
-15. **MANDATORY link check — do not skip, do not proceed to step 16 until complete.** Run `scripts/link_check.py --url <url> --title <title> --company <company>` for every finalist URL one by one. Any URL that returns `"ok_basic": false`, an HTTP error, a bad-page marker, missing selected-role details, or no reader-visible application path must be dropped and replaced before continuing. After the script passes, also open each finalist URL directly and run the final reader-usability pass from `references/search-and-screening.md`; replace or reject any job whose link cannot be verified. For SmartRecruiters and similar ATS pages, do not trust stale page titles, cached snippets, or metadata alone: the currently opened page must show the selected job title, company, job description, and an apply/interested action to a normal reader. Record every dropped link via `scripts/bad_links.py append` before searching for a replacement. This verification is internal; do not include a `链接核验` field or mention scraping, crawling, rendering, parser behavior, ATS quirks, or verification mechanics in the public output.
-16. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 15 may appear here.
-17. Run `scripts/format_daily_picks.py --input <final-jobs.json> ...` to validate required fields and render Markdown. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Fix any validation errors before writing final output.
-18. Save or append the rendered Markdown to the appropriate file, then run `scripts/validate_report.py <report.md> --check-links` whenever shell network access is available. Fix validation errors before responding. If the result includes `bad_link_candidates`, record each failed URL with `scripts/bad_links.py append` before replacing it. If shell network is unavailable, run `scripts/link_check.py` on every final URL separately as soon as access is available; do not rely on Markdown-only validation.
-19. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. Also provide the same content in the response unless the user only asked to save it.
+14. Apply TOML `screening_rules`, project-level audience preferences, and `link_rules` as practical screening inputs, but never use them to weaken the hard rules above. Audience preferences should be interpreted through the fixed Markdown structure in `references/audience-preferences-template.md`, not through open-ended prose reading.
+15. For Greenhouse, Lever, Ashby, Workable, SmartRecruiters, and company career URLs, run `scripts/ats_extract.py <url>` when shell network access is available. Use extracted title/company/location as a consistency check; if it disagrees with the candidate, open the page and resolve the mismatch before proceeding.
+16. **MANDATORY finalist gate — do not skip, do not proceed to step 17 until complete.** Finalist verification has two separate gates:
+   - Gate A: run `scripts/link_check.py --url <url> --title <title> --company <company>` for every finalist URL one by one. Any URL that returns `"ok_basic": false`, an HTTP error, a bad-page marker, missing selected-role details, or no reader-visible application path must be dropped and replaced before continuing.
+   - Gate B: after the script passes, open each finalist URL directly and fill the fixed reader-facing checklist in `references/final-link-review-checklist.md`. Do not replace the checklist with a free-form summary. Any checklist result that indicates `list`, `homepage`, `blocked`, `wrong_job`, `closed`, `login`, `paywall`, or `captcha` must be rejected.
+   - For SmartRecruiters and similar ATS pages, do not trust stale page titles, cached snippets, or metadata alone: the currently opened page must show the selected job title, company, job description, and an apply/interested action to a normal reader.
+   - Record every dropped link via `scripts/bad_links.py append` before searching for a replacement.
+   - This verification is internal; do not include a `链接核验` field or mention scraping, crawling, rendering, parser behavior, ATS quirks, or verification mechanics in the public output.
+17. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 16 may appear here. Use `references/classification-rubric.md` as the label authority:
+   - `岗位归类`, `岗位方向`, `工作方式`, `申请门槛`, and `中国可投把握` must be selected from fixed enums.
+   - Use short reader-facing notes only after the normalized label, not instead of the label.
+   - Do not let free-form model preference override the rubric, especially for AI Trainer, evaluator, annotation, and borderline APAC-remote roles.
+18. Run `scripts/format_daily_picks.py --input <final-jobs.json> ...` to validate required fields and render Markdown. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Fix any validation errors before writing final output.
+19. Save or append the rendered Markdown to the appropriate file, then run `scripts/validate_report.py <report.md> --check-links` whenever shell network access is available. Fix validation errors before responding. If the result includes `bad_link_candidates`, record each failed URL with `scripts/bad_links.py append` before replacing it. If shell network is unavailable, run `scripts/link_check.py` on every final URL separately as soon as access is available; do not rely on Markdown-only validation.
+20. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. Also provide the same content in the response unless the user only asked to save it.
 
 If the user reports a broken, closed, login-gated, paywalled, wrong-job, or unavailable link from a previous report, run `scripts/bad_links.py append --date ... --url ... --title ... --company ... --reason ...` before finding a replacement. Treat that report as decisive for future public usefulness.
 
@@ -106,6 +143,8 @@ Prefer 6-10 strong jobs for public roundup mode and 5-8 strong jobs for targeted
 Use direct evidence from the job page for location, remote status, company, time-zone feasibility, role requirements, and application path. If a field is unclear but the role is otherwise promising, label it as `中国可投待确认` and state what the applicant should confirm, using applicant-facing wording such as `投递前确认中国大陆雇佣/合同形式`. Do not expose internal collection or verification details such as `抓取`, `爬取`, `结构化字段`, `无登录环境`, `页面渲染`, `ATS`, `解析`, `检索结果`, or `不同环境显示不完全`.
 
 For AI Trainer, data annotation, rater, evaluator, and language-model training roles, require stronger China eligibility evidence than for normal remote jobs. A title like `Mandarin Chinese AI Trainer`, `Simplified Chinese Evaluator`, or `Chinese Data Annotator` only proves language demand, not mainland China eligibility. Reject these roles unless the page explicitly supports applicants working from mainland China/China, or the user asks for overseas Chinese applicants instead of China-based applicants.
+
+When the next implementation lands, candidate review cards, fixed link-review checklists, and rubric-driven labels become mandatory intermediates rather than optional reasoning aids. Until then, use the documentation as the intended standard and prefer conservative rejection when the evidence is weak.
 
 ## Required Output Format
 
