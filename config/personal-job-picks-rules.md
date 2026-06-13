@@ -20,7 +20,6 @@
 - 不要把个人岗位筛选结果追加到公共 `job-picks/seen-jobs.tsv`
 - `bad links` 继续优先读取公共共享文件：
   - `/Users/kaybee/Documents/github/find_work/job-picks/bad-links.tsv`
-- 如果个人目录里已经存在历史 `bad-links.tsv`，默认不作为主规则源；除非用户另行说明
 
 ## 交互约定
 
