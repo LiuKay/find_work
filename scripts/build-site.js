@@ -7,6 +7,7 @@ const ABOUT_FILE = path.join(ROOT, "about.md");
 const DIST_DIR = path.join(ROOT, "dist");
 const SITE_DIR = path.join(ROOT, "site");
 const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || "";
+const ASSET_VERSION = process.env.CF_PAGES_COMMIT_SHA || "local";
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -101,7 +102,7 @@ function markdownToHtml(markdown) {
     if (image) {
       closeParagraph();
       closeList();
-      html.push(`<figure class="markdown-image"><img src="${escapeHtml(image[2])}" alt="${escapeHtml(image[1])}" loading="lazy"></figure>`);
+      html.push(`<figure class="markdown-image"><img src="${escapeHtml(image[2])}" alt="${escapeHtml(image[1])}" width="180" loading="lazy"></figure>`);
       continue;
     }
 
@@ -445,7 +446,7 @@ function pageTemplate({ title, description, body, canonicalPath = "/", scripts =
   <meta name="robots" content="noindex,nofollow">
   <meta name="description" content="${escapeHtml(description)}">
   <title>${escapeHtml(title)}</title>
-  <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="stylesheet" href="/assets/styles.css?v=${escapeHtml(ASSET_VERSION)}">
   <link rel="canonical" href="${escapeHtml(canonicalPath)}">
   ${scriptTags}
 </head>
