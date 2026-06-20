@@ -3,6 +3,7 @@ const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
 const PICKS_DIR = path.join(ROOT, "job-picks");
+const ABOUT_FILE = path.join(ROOT, "about.md");
 const DIST_DIR = path.join(ROOT, "dist");
 const SITE_DIR = path.join(ROOT, "site");
 const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || "";
@@ -93,6 +94,14 @@ function markdownToHtml(markdown) {
     if (!line.trim()) {
       closeParagraph();
       closeList();
+      continue;
+    }
+
+    const image = /^!\[([^\]]*)\]\((\/[^)\s]+)\)$/.exec(line.trim());
+    if (image) {
+      closeParagraph();
+      closeList();
+      html.push(`<figure class="markdown-image"><img src="${escapeHtml(image[2])}" alt="${escapeHtml(image[1])}" loading="lazy"></figure>`);
       continue;
     }
 
@@ -251,6 +260,19 @@ function readPick(file) {
     slug,
     title: firstHeading ? firstHeading[1].trim() : slug,
     date: dateMatch ? dateMatch[1] : "未标日期",
+    markdown,
+    html: markdownToHtml(markdown),
+  };
+}
+
+function readAboutPage() {
+  const fallbackMarkdown = "# 关于 Find Work\n\nFind Work 是一个面向中国申请者的岗位筛选网站。";
+  const markdown = fs.existsSync(ABOUT_FILE) ? fs.readFileSync(ABOUT_FILE, "utf8") : fallbackMarkdown;
+  const firstHeading = markdown.match(/^#\s+(.+)$/m);
+  const title = firstHeading ? firstHeading[1].trim() : "关于 Find Work";
+
+  return {
+    title,
     markdown,
     html: markdownToHtml(markdown),
   };
@@ -440,6 +462,7 @@ function pageTemplate({ title, description, body, canonicalPath = "/", scripts =
       <a href="/">最新</a>
       <a href="/archive/">归档</a>
       <a href="/survey/">问卷</a>
+      <a href="/about/">关于</a>
     </nav>
   </header>
   ${body}
@@ -592,6 +615,19 @@ function renderIndex(picks) {
       <a class="primary-link" href="/archive/">进入岗位筛选</a>
     </section>
   </section>
+</main>`,
+  });
+}
+
+function renderAbout(about) {
+  return pageTemplate({
+    title: `${about.title} | Find Work`,
+    description: "Find Work 岗位筛选网站说明、适合人群、筛选判断方式和个人说明。",
+    canonicalPath: "/about/",
+    body: `<main class="reading-layout">
+  <article class="pick-article">
+    ${about.html}
+  </article>
 </main>`,
   });
 }
@@ -835,6 +871,7 @@ function copyAssets() {
   fs.copyFileSync(path.join(SITE_DIR, "archive.js"), path.join(DIST_DIR, "assets", "archive.js"));
   fs.copyFileSync(path.join(SITE_DIR, "survey.js"), path.join(DIST_DIR, "assets", "survey.js"));
   fs.copyFileSync(path.join(SITE_DIR, "survey-admin.js"), path.join(DIST_DIR, "assets", "survey-admin.js"));
+  fs.copyFileSync(path.join(SITE_DIR, "wechat_qr.jpg"), path.join(DIST_DIR, "assets", "wechat_qr.jpg"));
 }
 
 function main() {
@@ -844,6 +881,7 @@ function main() {
   const picks = getPickFiles().map(readPick);
   const jobs = picks.flatMap(extractJobs);
   writePage("index.html", renderIndex(picks));
+  writePage(path.join("about", "index.html"), renderAbout(readAboutPage()));
   writePage(path.join("archive", "index.html"), renderArchive(picks));
   writePage(path.join("survey", "index.html"), renderSurvey());
   writePage(path.join("survey-admin", "index.html"), renderSurveyAdmin());

@@ -919,6 +919,20 @@ time {
   text-underline-offset: 0.18em;
 }
 
+.markdown-image {
+  margin: 18px 0 16px;
+}
+
+.markdown-image img {
+  display: block;
+  width: min(180px, 48vw);
+  height: auto;
+  padding: 8px;
+  background: var(--paper);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px rgba(77, 64, 43, 0.1), 0 8px 22px rgba(45, 35, 20, 0.1);
+}
+
 .archive-layout {
   margin-top: 24px;
   margin-bottom: 64px;
