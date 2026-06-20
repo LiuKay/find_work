@@ -104,3 +104,4 @@ date	url	title	company	reason	replacement_url
 2026-06-10	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/5832084004	Senior Clinical Data Manager	Precision Medicine Group	link_check_possible_captcha_marker	
 2026-06-15	https://job-boards.greenhouse.io/remotecom/jobs/7728848003	Benefits Operations Specialist - APAC	Remote	captcha risk in public job page check	
 2026-06-16	https://www.mongodb.com/careers/job?gh_jid=7380221	Sales Development Representative	MongoDB	link_check_failed_company_tokens_not_found	
+2026-06-20	https://jobs.smartrecruiters.com/Wabtec/3743990013486536	Supply Chain Specialist	Wabtec	link_check_possible_bad_page_marker_sign_in	
