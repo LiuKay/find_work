@@ -106,3 +106,5 @@ date	url	title	company	reason	replacement_url
 2026-06-16	https://www.mongodb.com/careers/job?gh_jid=7380221	Sales Development Representative	MongoDB	link_check_failed_company_tokens_not_found	
 2026-06-20	https://jobs.smartrecruiters.com/Wabtec/3743990013486536	Supply Chain Specialist	Wabtec	link_check_possible_bad_page_marker_sign_in	
 2026-06-22	https://job-boards.greenhouse.io/canonical/jobs/7561124	Silicon Alliances Ecosystem Development Manager - Shanghai or Beijing	Canonical	link_check_possible_bad_page_marker_captcha	
+2026-06-23	https://job-boards.greenhouse.io/remotecom/jobs/7778888003	Engineering Team Leader	Remote	link_check captcha marker on finalist verification	
+2026-06-23	https://job-boards.greenhouse.io/canonical/jobs/6874537	Graduate HR Generalist	Canonical	redirected to canonical board error page instead of specific job detail	
