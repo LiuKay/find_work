@@ -245,7 +245,9 @@ function getPickFiles() {
   if (!fs.existsSync(PICKS_DIR)) return [];
   return fs
     .readdirSync(PICKS_DIR)
-    .filter((file) => /^\d{4}-\d{2}-\d{2}(?:-[\w-]+)?\.md$/.test(file))
+    // Accept date-based markdown files whose optional suffix may contain
+    // non-ASCII labels such as Chinese topic names.
+    .filter((file) => /^\d{4}-\d{2}-\d{2}(?:-[^.]+)?\.md$/.test(file))
     .sort()
     .reverse();
 }
