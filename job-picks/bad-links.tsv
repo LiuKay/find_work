@@ -129,3 +129,7 @@ date	url	title	company	reason	replacement_url
 2026-07-02	https://remotive.com/remote-jobs/writing/copywriter-1749306	Copywriter	Coalition Technologies	link_check HTTP 403 on finalist verification	
 2026-07-02	https://remotive.com/remote-jobs/marketing/office-assistant-1680495	Office Assistant	Coalition Technologies	link_check HTTP 403 on finalist verification	
 2026-07-02	https://job-boards.greenhouse.io/globalizationpartners/jobs/7742755003	Sr HR Associate - 9 month fixed term	G-P	final URL redirected to jobs list instead of specific role	
+2026-07-03	https://jobs.ashbyhq.com/ashby/893cd08a-929c-4077-b39c-64bc34f347ea	Customer Success Manager, APAC	Ashby	link_check captcha marker on finalist verification	
+2026-07-03	https://jobs.workable.com/view/8quwx4CqcjXprFzkJFqAtB/remote-success-manager-%283997%29-in-shanghai-at-gbg	Success Manager (3997)	GBG	HTTP 410 on finalist verification	
+2026-07-03	https://jobs.workable.com/view/rB23Uguo6XgJrtfvxx8oVK/remote-business-development-manager---china-in-beijing-at-cequens	Business Development Manager - China	CEQUENS	HTTP 410 on finalist verification	
+2026-07-03	https://job-boards.greenhouse.io/globalizationpartners/jobs/7732874003	Sr Partner Manager	G-P	final URL redirected to jobs list instead of specific role	
