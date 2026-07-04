@@ -133,3 +133,8 @@ date	url	title	company	reason	replacement_url
 2026-07-03	https://jobs.workable.com/view/8quwx4CqcjXprFzkJFqAtB/remote-success-manager-%283997%29-in-shanghai-at-gbg	Success Manager (3997)	GBG	HTTP 410 on finalist verification	
 2026-07-03	https://jobs.workable.com/view/rB23Uguo6XgJrtfvxx8oVK/remote-business-development-manager---china-in-beijing-at-cequens	Business Development Manager - China	CEQUENS	HTTP 410 on finalist verification	
 2026-07-03	https://job-boards.greenhouse.io/globalizationpartners/jobs/7732874003	Sr Partner Manager	G-P	final URL redirected to jobs list instead of specific role	
+2026-07-04	https://jobs.ashbyhq.com/heron-power/53719004-402e-452a-9c79-524713b7972b	China (preferably based in Shanghai or Shenzhen)	Heron Power	link_check did not show selected title/company on specific job page	
+2026-07-04	https://jobs.workable.com/view/nmW4LRyPrgE2TLP9Tj8fev/chinese-all-dialects-to-english-remote-telephone-video-interpreter-required-in-china-at-recruitment-empire	Chinese All Dialects to English Remote Telephone Video Interpreter Required	Recruitment Empire	HTTP 410 on finalist verification	
+2026-07-04	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/5903353004	Start Up Lead APAC	Precision Medicine Group	duplicate and link_check captcha marker on finalist verification	
+2026-07-04	https://job-boards.greenhouse.io/pfm/jobs/6103596004	Contracts Manager APAC	Precision for Medicine	link_check captcha marker on finalist verification	
+2026-07-04	https://jobs.lever.co/xsolla	Product Owner – Corporate website (xsolla.com)	Xsolla	company jobs list URL, not a specific job detail page	
