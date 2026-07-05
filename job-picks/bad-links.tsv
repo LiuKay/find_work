@@ -138,3 +138,10 @@ date	url	title	company	reason	replacement_url
 2026-07-04	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/5903353004	Start Up Lead APAC	Precision Medicine Group	duplicate and link_check captcha marker on finalist verification	
 2026-07-04	https://job-boards.greenhouse.io/pfm/jobs/6103596004	Contracts Manager APAC	Precision for Medicine	link_check captcha marker on finalist verification	
 2026-07-04	https://jobs.lever.co/xsolla	Product Owner – Corporate website (xsolla.com)	Xsolla	company jobs list URL, not a specific job detail page	
+2026-07-05	https://jobs.workable.com/view/vrXPdUuLgFs9yY3djCazN5/remote-content-moderator-%28chinese-speaker%29-in-china-at-staff4me	Content Moderator (Chinese Speaker)	Staff4Me	HTTP 410 on finalist verification	
+2026-07-05	https://jobs.ashbyhq.com/heron-power/53719004-402e-452a-9c79-524713b7972b/application	Supplier Industrialization Engineer - China	Heron Power	link_check did not show selected title/company on specific job page	
+2026-07-05	https://jobs.ashbyhq.com/lilt-production/0618cc34-164c-4d0d-9b47-7ba1d4bc2ae3	Linguist - Traditional Chinese (Taiwan) - UI Technical/Localization - Remote	LILT (Production)	link_check captcha marker on finalist verification	
+2026-07-05	https://jobs.ashbyhq.com/lilt-production/68267d7e-e53c-4fbf-a87b-a523cb32e422	Subject Matter Expert – Manufacturing & Industrial Operations (English/Mandarin) – Remote	LILT (Production)	link_check captcha marker on finalist verification	
+2026-07-05	https://job-boards.greenhouse.io/iherb/jobs/7733932003	Growth Marketing Specialist- APAC	iHerb	link_check captcha marker on finalist verification	
+2026-07-05	https://jobs.flashpointvc.com/companies/ideals-2/jobs/80236552-senior-talent-acquisition-specialist-china-remote	Senior GTM Talent Acquisition Specialist	Ideals	page indicated job is no longer accepting applications	
+2026-07-05	https://jobs.lever.co/applike	Senior Supply Growth Manager - SEA + Greater China Region (f/m/d)	applike group	company jobs list URL, not a specific job detail page	
