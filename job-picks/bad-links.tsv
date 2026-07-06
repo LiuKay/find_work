@@ -145,3 +145,8 @@ date	url	title	company	reason	replacement_url
 2026-07-05	https://job-boards.greenhouse.io/iherb/jobs/7733932003	Growth Marketing Specialist- APAC	iHerb	link_check captcha marker on finalist verification	
 2026-07-05	https://jobs.flashpointvc.com/companies/ideals-2/jobs/80236552-senior-talent-acquisition-specialist-china-remote	Senior GTM Talent Acquisition Specialist	Ideals	page indicated job is no longer accepting applications	
 2026-07-05	https://jobs.lever.co/applike	Senior Supply Growth Manager - SEA + Greater China Region (f/m/d)	applike group	company jobs list URL, not a specific job detail page	
+2026-07-06	https://jobs.workable.com/view/s7nDKHD3mqbgnFsGwaE2UY/remote-talent-pool---legal-intern-in-china-at-slasify	Talent Pool - Legal Intern	Slasify	HTTP 410 during finalist verification	
+2026-07-06	https://jobs.workable.com/view/eZrwJyXiJ5QM4r7ifYprrp/remote-customer-success-manager-china-in-china-at-ansvery	Customer Success Manager China	Ansvery	HTTP 404 during finalist replacement check	
+2026-07-06	https://jobs.workable.com/view/jM9G77tVKsazV4MvawQxBE/remote-customer-support-agent-in-china-at-supportyourapp	Customer Support Agent	SupportYourApp	HTTP 404 during finalist replacement check	
+2026-07-06	https://jobs.workable.com/view/8Jz9fWsyUcDhUeVvHkvRX2/remote-customer-success-manager-in-china-at-ansvery	Customer Success Manager	Ansvery	HTTP 404 during finalist replacement check	
+2026-07-06	https://jobs.workable.com/view/7orWvWLwqRu7G6yxW9eusW/remote-sales-manager---global-sales-expansion-in-china-at-critical-manufacturing	Sales Manager - Global Sales Expansion	Critical Manufacturing	final URL resolved to Germany location rather than China-specific page during finalist review	
