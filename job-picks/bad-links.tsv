@@ -164,3 +164,7 @@ date	url	title	company	reason	replacement_url
 2026-07-09	https://jobs.lever.co/emma-sleep	Junior Operations Manager – Hong Kong	Emma – The Sleep Company	not a specific job page	
 2026-07-09	https://job-boards.greenhouse.io/adjustjobs/jobs/4623238006	(Associate) Customer Success Manager	Adjust	final URL returned job-board listing instead of specific job page	
 2026-07-09	https://job-boards.greenhouse.io/eclipsetrading/jobs/8509541002	Business Operations Associate	Eclipse Trading	final URL returned job-board listing instead of specific job page	
+2026-07-11	https://apply.workable.com/keywords-intl1/j/8B398BE33F	Community Game Tester (Paid, On-Call)	Keywords Studios	职位页面已下线并跳转到职位列表	
+2026-07-11	https://jobs.smartrecruiters.com/WildBrain/3743990009219915-licensing-executive	Licensing Executive	WildBrain	职位页面标记为已过期	
+2026-07-11	https://jobs.smartrecruiters.com/Nagarro1/744000126643729-associate-staff-engineer-automation-qa-	Associate Staff Engineer(Automation QA)	Nagarro	职位页面标记为已过期	
+2026-07-11	https://job-boards.eu.greenhouse.io/remotepeople/jobs/4825932101	BI Engineer (CN)	Remote People	职位链接当前无法打开岗位详情并跳转错误页	
