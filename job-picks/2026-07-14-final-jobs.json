@@ -1,21 +1,10 @@
 [
-  {
-    "title": "Regional Sales Manager Asia-Pacific (gn)",
-    "company_platform": "ZIM Aircraft Seating GmbH / Personio",
-    "company": "ZIM Aircraft Seating GmbH",
-    "job_group": "外企 APAC 岗位",
-    "job_direction": "销售",
-    "work_mode": "全球远程",
-    "experience": "3-5 年",
-    "language": "英文",
-    "application_barrier": "中",
-    "application_barrier_note": "需要 APAC 航空座椅、航空供应链或 B2B 工业销售经验，并能接受区域出差",
-    "china_applicability": "高",
-    "china_applicability_note": "岗位明确写明中国为优先地点，也可远程工作",
-    "timezone_judgment": "APAC 区域岗位，北京时间协作友好",
-    "best_for": "适合航空、飞机座椅、航空供应链、工业品或区域大客户销售背景的人",
-    "notes": "需频繁 APAC 出差，投递前确认常驻地、出差比例和中国大陆合同形式",
-    "url": "https://zim-aircraft-seating-gmbh.jobs.personio.de/job/2707523?language=en",
-    "source": "Personio"
-  }
+{"title":"Regional Sales Manager Asia-Pacific (gn)","company_platform":"ZIM Aircraft Seating GmbH / Personio","company":"ZIM Aircraft Seating GmbH","job_group":"外企 APAC 岗位","job_direction":"销售","work_mode":"全球远程","experience":"3-5 年","language":"英文","application_barrier":"中","application_barrier_note":"需要 APAC 航空座椅、航空供应链或 B2B 工业销售经验，并能接受区域出差","china_applicability":"高","china_applicability_note":"岗位明确写明中国为优先地点，也可远程工作","timezone_judgment":"APAC 区域岗位，北京时间协作友好","best_for":"适合航空、飞机座椅、航空供应链、工业品或区域大客户销售背景的人","notes":"需频繁 APAC 出差，投递前确认常驻地、出差比例和中国大陆合同形式","url":"https://zim-aircraft-seating-gmbh.jobs.personio.de/job/2707523?language=en","source":"Personio"},
+{"title":"Embedded Linux Field Engineer (Mandarin speaking)","company_platform":"Canonical / Greenhouse","company":"Canonical","job_group":"海外远程岗位","job_direction":"技术","work_mode":"APAC 远程","experience":"3-5 年","language":"双语","application_barrier":"高","application_barrier_note":"需要 Linux 底层、嵌入式系统、脚本开发和客户技术交付经验","china_applicability":"中","china_applicability_note":"岗位面向 APAC 远程并要求普通话，但北京为办公室地点，投递前确认中国大陆工作安排","timezone_judgment":"APAC 远程，北京时间协作友好","best_for":"适合 Linux、嵌入式、IoT 或设备软件工程师","notes":"需要普通话和英文，并接受面向客户的技术出差","url":"https://job-boards.greenhouse.io/canonical/jobs/6994398","source":"Greenhouse"},
+{"title":"Support Engineer - China (Alibaba Cloud Strategic Accounts) 支持工程师 - 中国（阿里云战略客户）","company_platform":"ClickHouse / Greenhouse","company":"ClickHouse","job_group":"外企中国岗位","job_direction":"技术支持","work_mode":"中国本地办公","experience":"3-5 年","language":"双语","application_barrier":"中","application_barrier_note":"需要云平台、数据库或企业技术支持经验，并能服务中国客户","china_applicability":"高","china_applicability_note":"岗位明确标注 Mainland China remote，服务中国企业客户","timezone_judgment":"中国远程岗位，无明显时差","best_for":"适合云计算、数据库、SaaS 技术支持工程师","notes":"需同时处理英文技术材料和中文客户场景","url":"https://job-boards.greenhouse.io/clickhouse/jobs/6018725004","source":"Greenhouse"},
+{"title":"Engineering Manager - China","company_platform":"ClickHouse / Greenhouse","company":"ClickHouse","job_group":"外企中国岗位","job_direction":"技术","work_mode":"中国本地办公","experience":"高级","language":"英文","application_barrier":"高","application_barrier_note":"需要软件工程管理、分布式系统和团队领导经验","china_applicability":"高","china_applicability_note":"岗位明确标注 Mainland China remote，负责中国工程团队","timezone_judgment":"中国远程岗位，与团队所在时区协作可行","best_for":"适合有云平台、数据库或分布式系统团队管理经验的人","notes":"管理中国软件工程团队，需较强英文协作能力","url":"https://job-boards.greenhouse.io/clickhouse/jobs/5720674004","source":"Greenhouse"},
+{"title":"Technical Support Engineer (L1/Frontline Support), APAC","company_platform":"Databento / Greenhouse","company":"Databento","job_group":"外企 APAC 岗位","job_direction":"技术支持","work_mode":"APAC 远程","experience":"1-3 年","language":"英文","application_barrier":"中","application_barrier_note":"需要 API、数据产品或软件技术支持经验，负责 APAC 工作时段","china_applicability":"中","china_applicability_note":"岗位列出上海、北京及 APAC 远程地点，投递前确认中国大陆雇佣形式","timezone_judgment":"覆盖 APAC 工作时段，北京时间匹配","best_for":"适合有 API、金融数据或 SaaS 一线支持经验的人","notes":"金融数据领域，需能快速定位客户技术问题并升级处理","url":"https://job-boards.greenhouse.io/databento/jobs/7976254","source":"Greenhouse"},
+{"title":"Financial Data Sales Associate, APAC","company_platform":"Databento / Greenhouse","company":"Databento","job_group":"外企 APAC 岗位","job_direction":"销售","work_mode":"APAC 远程","experience":"1-3 年","language":"英文","application_barrier":"中","application_barrier_note":"需要金融数据、B2B 软件或金融科技销售经验","china_applicability":"中","china_applicability_note":"岗位列出上海、北京及 APAC 远程地点，投递前确认中国大陆合同形式","timezone_judgment":"APAC 远程且覆盖亚洲客户，北京时间协作友好","best_for":"适合金融数据、交易软件或 B2B SaaS 销售背景的人","notes":"面向金融机构客户，需理解数据产品和销售全流程","url":"https://job-boards.greenhouse.io/databento/jobs/7507651","source":"Greenhouse"},
+{"title":"International Consultant, APAC","company_platform":"Justworks / Greenhouse","company":"Justworks","job_group":"海外远程岗位","job_direction":"HR","work_mode":"APAC 远程","experience":"高级","language":"英文","application_barrier":"高","application_barrier_note":"需要 APAC 雇佣、EOR 或跨境人力合规咨询经验","china_applicability":"待确认","china_applicability_note":"岗位支持国际远程与 APAC 场景，但需投递前确认中国大陆雇佣法域覆盖","timezone_judgment":"APAC 跨时区协作，北京时间可覆盖亚洲客户","best_for":"适合 EOR、全球人力资源、劳动法或跨境 HR 咨询专家","notes":"工作涉及高风险 APAC 雇佣合规问题，通常要求较深专业经验","url":"https://job-boards.greenhouse.io/justworks/jobs/7974721","source":"Greenhouse"},
+{"title":"Project Manager - Ubuntu Embedded Systems","company_platform":"Canonical / Greenhouse","company":"Canonical","job_group":"海外远程岗位","job_direction":"项目管理","work_mode":"APAC 远程","experience":"3-5 年","language":"英文","application_barrier":"中","application_barrier_note":"需要嵌入式软件、IoT 或设备项目交付及跨团队协调经验","china_applicability":"中","china_applicability_note":"岗位明确支持 APAC 远程，但投递前确认中国大陆合同及北京办公地点限制","timezone_judgment":"APAC 远程，北京时间协作友好","best_for":"适合技术项目经理、IoT 交付或嵌入式产品项目负责人","notes":"项目涉及 Ubuntu 镜像、机器人、边缘网关和汽车等设备场景","url":"https://job-boards.greenhouse.io/canonical/jobs/4953222","source":"Greenhouse"}
 ]
