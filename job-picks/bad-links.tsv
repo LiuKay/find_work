@@ -180,3 +180,7 @@ date	url	title	company	reason	replacement_url
 2026-07-14	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/6102668004	Senior Clinical Project Manager	Precision Medicine Group	岗位页面出现验证码提示，未通过读者直达检查
 2026-07-14	https://job-boards.greenhouse.io/runpod/jobs/5173070008	Forward Deployed Engineer APAC	Runpod, Inc.	岗位链接返回 HTTP 500，无法稳定打开详情
 2026-07-14	https://job-boards.greenhouse.io/myshell/jobs/5013962008	Data Scientist	MyShell	岗位链接返回 404
+2026-07-15	https://job-boards.greenhouse.io/10xgenomics/jobs/7597471	Channel Sales Account Executive	10x Genomics	链接无法稳定打开，未通过直达检查
+2026-07-15	https://job-boards.greenhouse.io/remotecom/jobs/6529613003	Engineering Team Leader	Remote	岗位链接跳转职位列表错误页，无法打开详情
+2026-07-15	https://jobs.lever.co/weloglobal/1d68eb02-6a60-4961-af2b-5e2730d3d628	German into Japanese Patent Translators	Welo Global	岗位链接返回 404
+2026-07-15	https://jobs.smartrecruiters.com/Cielo2/744000114957987-senior-recruiter-korean-mandarin-english-	Senior Recruiter (Korean, Mandarin & English)	Cielo	职位页面标记为已过期
