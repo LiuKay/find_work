@@ -26,8 +26,8 @@
     if (filters.endDate && job.date > filters.endDate) return false;
     if (filters.language && job.language !== filters.language) return false;
     if (filters.workMode && job.workMode !== filters.workMode) return false;
-    if (filters.threshold && job.threshold !== filters.threshold) return false;
-    if (filters.confidence && job.confidence !== filters.confidence) return false;
+    if (filters.threshold && job.applicationBarrier !== filters.threshold) return false;
+    if (filters.confidence && job.chinaApplicability !== filters.confidence) return false;
     if (filters.experience && job.experience !== filters.experience) return false;
     if (filters.direction && job.direction !== filters.direction) return false;
     return true;
@@ -83,7 +83,8 @@
     const select = form.querySelector(`[data-filter-options="${field}"]`);
     if (!select) return;
 
-    const values = Array.from(new Set(jobs.map((job) => job[field]).filter(Boolean))).sort((a, b) =>
+    const jobField = field === "threshold" ? "applicationBarrier" : field === "confidence" ? "chinaApplicability" : field;
+    const values = Array.from(new Set(jobs.map((job) => job[jobField]).filter(Boolean))).sort((a, b) =>
       a.localeCompare(b, "zh-CN")
     );
 

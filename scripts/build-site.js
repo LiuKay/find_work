@@ -155,6 +155,19 @@ function extractMarkdownUrl(value) {
   return bareUrl ? bareUrl[0] : "";
 }
 
+function readStructuredJobs(slug) {
+  const filePath = path.join(PICKS_DIR, `${slug}-final-jobs.json`);
+  if (!fs.existsSync(filePath)) return [];
+
+  const source = fs.readFileSync(filePath, "utf8").trim();
+  try {
+    const jobs = JSON.parse(source);
+    return Array.isArray(jobs) ? jobs : [];
+  } catch {
+    return source.split("\n").filter(Boolean).map(JSON.parse);
+  }
+}
+
 function parseJobBlock(block, pick, index) {
   const heading = block.heading.trim();
   const titleMatch = heading.match(/岗位名称[：:]\s*(.+)$/);
@@ -238,7 +251,15 @@ function extractJobs(pick) {
   }
 
   if (current) blocks.push(current);
-  return blocks.map((block, index) => parseJobBlock(block, pick, index));
+  return blocks.map((block, index) => {
+    const job = parseJobBlock(block, pick, index);
+    const structured = pick.structuredJobs.find((item) => item.title === job.title) || pick.structuredJobs[index] || {};
+    return {
+      ...job,
+      applicationBarrier: plainMarkdown(structured.application_barrier || ""),
+      chinaApplicability: plainMarkdown(structured.china_applicability || ""),
+    };
+  });
 }
 
 function getPickFiles() {
@@ -265,6 +286,7 @@ function readPick(file) {
     date: dateMatch ? dateMatch[1] : "未标日期",
     markdown,
     html: markdownToHtml(markdown),
+    structuredJobs: readStructuredJobs(slug),
   };
 }
 
