@@ -209,3 +209,19 @@ date	url	title	company	reason	replacement_url
 2026-07-20	https://jobs.smartrecruiters.com/NielsenIQ/744000118348487-senior-specialist-project-management	Senior Specialist, Project Management	NielsenIQ	职位页标记已过期且页面标题已变化	
 2026-07-21	https://jobs.lever.co/Coda/94830c5d-59f4-4441-a1b8-12bce238ec71	Compliance & Partner Enablement Specialist	Coda	HTTP 404 during mandatory direct candidate check	
 2026-07-21	https://jobs.sap.com/job/Dalian-China-SAP-China-iXp-Intern-Intern-Queue-Manager-for-Technial-Support-Dalian-116023/1396939433	SAP China iXp Intern - Intern Queue Manager for Technical Support	SAP	direct page states position has been filled	
+2026-07-22	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/5776264004	Regulatory and Site Start Up Specialist	Precision Medicine Group	岗位链接跳转至职位列表，无法打开该岗位详情	""
+2026-07-22	https://job-boards.greenhouse.io/10xgenomics/jobs/6833512	Field Service Engineer	10x Genomics	岗位链接跳转至公司职位首页，无法打开该岗位详情	""
+2026-07-22	https://apply.workable.com/lawofficesofsabrinali/j/682C21FCD0	Bilingual Client Intake Specialist (Mandarin & English)	Law Offices of Sabrina Li	岗位链接跳转至未找到页面	""
+2026-07-22	https://jobs.workable.com/view/8XpAusdE4okafBXHxnakBS/remote---senior-manager---commercial---china---regional-coverage-in-china-at-cp-axtra	Remote - Senior Manager - Commercial - China - Regional Coverage	CP Axtra	岗位链接返回 HTTP 410，页面已不可用	""
+2026-07-22	https://careers.yodo1.com/jobs/7664931-people-operations-coordinator	People Operations Coordinator	Yodo1	link_check TLS fetch failed	""
+2026-07-22	https://careers.yodo1.com/jobs/7977600-games-recruitment-sourcer	Games Recruitment Sourcer	Yodo1	link_check TLS fetch failed	""
+2026-07-22	https://careers.yodo1.com/jobs/7665720-game-operations-manager-china	Game Operations Manager - China	Yodo1	link_check TLS fetch failed	""
+2026-07-22	https://jobs.crimsoneducation.org/jobs/7885366-customer-success-manager	Customer Success Manager	Crimson Education	link_check detected login marker	""
+2026-07-22	https://jobs.crimsoneducation.org/jobs/7762205-local-admissions-counsellor-china	Local Admissions Counsellor, China	Crimson Education	link_check detected login marker	""
+2026-07-22	https://jobs.crimsoneducation.org/jobs/7892585-strategy-consultant-crimson-rise-english-and-mandarin-speaking	Strategy Consultant, Crimson Rise (English and Mandarin Speaking)	Crimson Education	link_check detected login marker	""
+2026-07-22	https://wellfound.com/jobs/3769436-customer-success-associate-apac	Customer Success Associate (APAC)	Loxo	HTTP 403	""
+2026-07-22	https://job-boards.greenhouse.io/remotecom/jobs/7747902003	Onboarding Operations Specialist - APAC	Remote	redirects to jobs board error page	""
+2026-07-22	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/6114314004	Site Contracts Manager	Precision Medicine Group	link_check detected captcha marker	""
+2026-07-22	https://job-boards.greenhouse.io/planetlabs/jobs/7785112	Regional Manager, Customer Success (D&I - APJ)	Planet	application deadline passed and URL redirects to jobs board	""
+2026-07-22	https://job-boards.greenhouse.io/alpaca/jobs/6013555004	Brokerage Operations Associate I - ACATS	Alpaca	URL redirects to jobs board error page	""
+2026-07-22	https://job-boards.greenhouse.io/pfm/jobs/6052045004	Clinical Trial Manager	Precision for Medicine	link_check detected captcha marker	""
