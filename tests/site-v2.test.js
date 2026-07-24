@@ -8,6 +8,8 @@ const {
   buildPublicIssues,
   buildPublicJobs,
   matchesChannel,
+  readRecruiting,
+  renderRecruiting,
 } = require("../scripts/build-site");
 const { recommendSurveyChannels } = require("../site/survey");
 
@@ -55,6 +57,22 @@ for (const [channelId, payload] of Object.entries(surveyCases)) {
   assert.ok(recommendSurveyChannels(payload).includes(channelId), `survey mapping missing ${channelId}`);
 }
 assert.ok(publicJobs.length > 0);
+const recruitingPreview = renderRecruiting([
+  {
+    title: "Example <script>",
+    organization: "Example",
+    summary: "A test opportunity",
+    url: "https://example.com/ref",
+    promoted: true,
+  },
+]);
+assert.match(recruitingPreview, /推广链接/);
+assert.match(recruitingPreview, /rel="noopener noreferrer sponsored"/);
+assert.doesNotMatch(recruitingPreview, /Example <script>/);
+const invalidRecruitingFile = path.join(require("os").tmpdir(), `find-work-recruiting-${process.pid}.json`);
+fs.writeFileSync(invalidRecruitingFile, '[{"title":"x","organization":"x","summary":"x","url":"javascript:alert(1)"}]');
+assert.throws(() => readRecruiting(invalidRecruitingFile), /url must use http or https/);
+fs.unlinkSync(invalidRecruitingFile);
 assert.deepEqual(publicIds, expectedPublicIds);
 assert.ok(publicJobs.every((job) => curated.find((item) => item.job_id === job.id).status === "active"));
 assert.ok(
@@ -98,6 +116,7 @@ execFileSync(process.execPath, ["scripts/build-site.js"], {
 for (const file of [
   "index.html",
   "pool/index.html",
+  "recruiting/index.html",
   "assets/jobs.json",
   "assets/issues.json",
   "assets/channels.json",

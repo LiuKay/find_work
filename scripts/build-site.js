@@ -6,6 +6,7 @@ const ROOT = path.resolve(__dirname, "..");
 const PICKS_DIR = path.join(ROOT, "job-picks");
 const CURATED_FILE = path.join(ROOT, "data", "curated", "jobs.ndjson");
 const ISSUES_DIR = path.join(ROOT, "data", "issues");
+const RECRUITING_FILE = path.join(ROOT, "data", "recruiting.json");
 const ABOUT_FILE = path.join(ROOT, "about.md");
 const DIST_DIR = path.join(ROOT, "dist");
 const SITE_DIR = path.join(ROOT, "site");
@@ -422,6 +423,20 @@ function readIssues(issuesDir = ISSUES_DIR) {
     .map((file) => JSON.parse(fs.readFileSync(path.join(issuesDir, file), "utf8")));
 }
 
+function readRecruiting(filePath = RECRUITING_FILE) {
+  const items = fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, "utf8")) : [];
+  if (!Array.isArray(items)) throw new Error("data/recruiting.json must contain an array.");
+  return items.map((item, index) => {
+    const label = `data/recruiting.json item ${index + 1}`;
+    if (!item.title || !item.organization || !item.summary || !item.url) {
+      throw new Error(`${label} requires title, organization, summary, and url.`);
+    }
+    const url = new URL(item.url);
+    if (!["http:", "https:"].includes(url.protocol)) throw new Error(`${label} url must use http or https.`);
+    return { ...item, url: url.href };
+  });
+}
+
 function isPublicCuratedJob(job) {
   let safeUrl = false;
   try {
@@ -721,6 +736,7 @@ function pageTemplate({ title, description, body, canonicalPath = "/", scripts =
     <nav class="site-nav" aria-label="主导航">
       <a href="/">最新</a>
       <a href="/pool/">可投</a>
+      <a href="/recruiting/">招募</a>
       <a href="/archive/">归档</a>
       <a href="/survey/">问卷</a>
       <a href="/about/">关于</a>
@@ -942,6 +958,47 @@ function renderArchive(picks) {
   <section class="issue-archive" aria-labelledby="issue-archive-title">
   <h2 id="issue-archive-title">每日归档</h2>
   <ol class="full-archive-list">${items}</ol>
+  </section>
+</main>`,
+  });
+}
+
+function renderRecruiting(items) {
+  const opportunities = items
+    .map(
+      (item) => `<article class="job-section opportunity-item">
+    <div class="job-section-head">
+      <div class="job-section-title">
+        <div><span class="opportunity-status">${escapeHtml(item.status || "开放中")}</span>${item.promoted ? '<span class="promotion-badge">推广链接</span>' : ""}</div>
+        <h2>${escapeHtml(item.title)}</h2>
+        <p>${escapeHtml(item.organization)}</p>
+      </div>
+    </div>
+    <p class="opportunity-summary">${escapeHtml(item.summary)}</p>
+    ${item.format || item.deadline ? `<dl class="job-judgement-grid">
+      ${renderDetailRow("形式", item.format)}
+      ${renderDetailRow("有效期", item.deadline)}
+    </dl>` : ""}
+    ${item.fit ? `<dl class="job-detail-stack">${renderDetailRow("适合谁", item.fit)}</dl>` : ""}
+    <a class="job-apply-link opportunity-link" href="${escapeHtml(item.url)}" rel="noopener noreferrer${item.promoted ? " sponsored" : ""}" target="_blank">查看招募详情 <span aria-hidden="true">↗</span></a>
+  </article>`
+    )
+    .join("\n");
+
+  return pageTemplate({
+    title: "招募与合作机会 | Find Work",
+    description: "我主动收集或合作推广的招募与合作机会。",
+    canonicalPath: "/recruiting/",
+    body: `<main class="archive-layout recruiting-layout">
+  <div class="section-kicker">Recruiting Board</div>
+  <h1>招募与合作机会</h1>
+  <p class="recruiting-lead">这里放我主动收集、确认值得关注的机会，也可能包含我的专属推广入口。</p>
+  <aside class="promotion-note" aria-labelledby="promotion-note-title">
+    <strong id="promotion-note-title">先说明</strong>
+    <p>带有「推广链接」标识的入口可能为我带来奖励，但不会增加你的申请成本。请在参与前自行核实招募方、期限和具体条款。</p>
+  </aside>
+  <section class="opportunity-list pick-detail-list" aria-label="招募机会">
+    ${opportunities || '<div class="job-section opportunity-empty"><strong>新的机会正在整理</strong><p>确认信息和参与条件后，我会发布在这里。</p></div>'}
   </section>
 </main>`,
   });
@@ -1195,9 +1252,11 @@ function main() {
   const poolJobs = buildPublicJobs(curatedJobs, issues);
   const publicIssues = buildPublicIssues(issues, poolJobs);
   const publicChannels = buildPublicChannels(poolJobs, asOfDate);
+  const recruiting = readRecruiting();
   writePage("index.html", renderIndex(picks, poolJobs, publicIssues, publicChannels, asOfDate));
   writePage(path.join("about", "index.html"), renderAbout(readAboutPage()));
   writePage(path.join("pool", "index.html"), renderPool(asOfDate));
+  writePage(path.join("recruiting", "index.html"), renderRecruiting(recruiting));
   writePage(path.join("archive", "index.html"), renderArchive(picks));
   writePage(path.join("survey", "index.html"), renderSurvey());
   writePage(path.join("survey-admin", "index.html"), renderSurveyAdmin());
@@ -1241,4 +1300,6 @@ module.exports = {
   normalizeJobUrl,
   poolCutoffDate,
   publicJobFromCurated,
+  readRecruiting,
+  renderRecruiting,
 };
