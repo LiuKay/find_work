@@ -1,0 +1,21 @@
+{
+  "date": "2026-05-28",
+  "issue_id": "2026-05-28-it-product-project",
+  "job_ids": [
+    "j_ea65298f810a",
+    "j_66ec4c12b76d",
+    "j_649aa5d0a9a7",
+    "j_a2db9b5a8851",
+    "j_ae8c86d655a7"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 5,
+    "directions": [
+      "产品",
+      "实施",
+      "需求分析"
+    ]
+  },
+  "title": "2026-05-28 IT产品/需求分析/系统分析/项目经理岗位精选"
+}

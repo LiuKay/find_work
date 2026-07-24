@@ -1,0 +1,198 @@
+# Editable source configuration for the daily-job-picks skill.
+# Keep this file cross-platform: it is parsed with Python's standard tomllib.
+
+[output_defaults]
+public_mode = "公共精选"
+targeted_mode = "定向精选"
+public_count_min = 6
+public_count_max = 10
+targeted_count_min = 5
+targeted_count_max = 8
+public_title_template = "# {date} 外企/海外远程岗位精选"
+targeted_title_template = "# {date} {target} 岗位专选"
+default_industry = "外企中国岗位 / APAC / 海外远程"
+
+[[source_groups]]
+name = "Company career pages"
+enabled = true
+trust_level = "A"
+source_type = "company_career"
+avoid_as_final_link = false
+search_templates = [
+  '"{role}" "China" "careers"',
+  '"{role}" "APAC" "careers"',
+  '"{role}" "Singapore" "Hong Kong" "careers"',
+  '"{role}" "Asia" "remote" "careers"'
+]
+
+[[source_groups]]
+name = "Greenhouse"
+enabled = true
+trust_level = "A"
+source_type = "ats"
+avoid_as_final_link = false
+search_templates = [
+  'site:boards.greenhouse.io "{role}" "APAC"',
+  'site:job-boards.greenhouse.io "{role}" "APAC"',
+  'site:boards.greenhouse.io "{role}" "Asia" "Remote"',
+  'site:job-boards.greenhouse.io "{role}" "Singapore"'
+]
+
+[[source_groups]]
+name = "Lever"
+enabled = true
+trust_level = "A"
+source_type = "ats"
+avoid_as_final_link = false
+search_templates = [
+  'site:jobs.lever.co "{role}" "APAC"',
+  'site:jobs.lever.co "{role}" "Asia" "Remote"',
+  'site:jobs.lever.co "{role}" "Singapore"',
+  'site:jobs.lever.co "{role}" "China"'
+]
+
+[[source_groups]]
+name = "Workable"
+enabled = true
+trust_level = "A"
+source_type = "ats"
+avoid_as_final_link = false
+search_templates = [
+  'site:apply.workable.com "{role}" "APAC"',
+  'site:apply.workable.com "{role}" "Asia"',
+  'site:apply.workable.com "{role}" "Remote"'
+]
+
+[[source_groups]]
+name = "SmartRecruiters"
+enabled = true
+trust_level = "A"
+source_type = "ats"
+avoid_as_final_link = false
+search_templates = [
+  'site:jobs.smartrecruiters.com "{role}" "APAC"',
+  'site:jobs.smartrecruiters.com "{role}" "Asia"',
+  'site:jobs.smartrecruiters.com "{role}" "China"'
+]
+
+[[source_groups]]
+name = "Remote job boards"
+enabled = true
+trust_level = "B"
+source_type = "remote_board"
+avoid_as_final_link = false
+search_templates = [
+  'site:remote.co/remote-jobs "{role}" "Asia"',
+  'site:remote.co/remote-jobs "{role}" "APAC"',
+  'site:weworkremotely.com "{role}" "Asia"',
+  'site:remoteok.com "{role}" "APAC"',
+  'site:himalayas.app "{role}" "Asia"'
+]
+
+[[source_groups]]
+name = "LinkedIn and gated discovery"
+enabled = true
+trust_level = "C"
+source_type = "discovery"
+avoid_as_final_link = true
+search_templates = [
+  'site:linkedin.com/jobs "{role}" "APAC"',
+  'site:otta.com "{role}" "APAC"',
+  'site:flexjobs.com "{role}" "remote" "Asia"',
+  'site:ashbyhq.com "{role}" "APAC"'
+]
+
+[[role_profiles]]
+id = "support-ops"
+label = "客服 / 运营 / 客户成功"
+enabled = true
+keywords = ["customer support", "customer success", "support specialist", "operations coordinator", "community operations"]
+directions = ["客服", "运营", "技术支持"]
+preferred_regions = ["China", "Hong Kong", "Singapore", "APAC", "Asia", "Remote"]
+notes = "公共精选低门槛和客户-facing 岗位池。"
+
+[[role_profiles]]
+id = "content-localization"
+label = "内容 / 本地化 / 市场运营"
+enabled = true
+keywords = ["content specialist", "localization", "translator", "copywriter", "editor", "marketing operations"]
+directions = ["内容", "本地化", "运营"]
+preferred_regions = ["China", "Hong Kong", "Singapore", "APAC", "Asia", "Remote"]
+notes = "适合英文较好、内容和本地化背景读者。"
+
+[[role_profiles]]
+id = "mkt-brand-planning"
+label = "营销策划 / 品牌营销"
+enabled = true
+keywords = ["Marketing Planner", "Brand Marketing", "Brand Manager", "Marketing Manager", "Campaign Manager", "Integrated Marketing", "Consumer Marketing", "CRM Marketing", "Digital Marketing", "Growth Marketing", "Marketing Communications", "Social Media Marketing"]
+directions = ["运营", "内容", "销售支持"]
+preferred_regions = ["Shanghai", "Hangzhou", "China", "APAC", "Asia", "Remote"]
+notes = "定向 MKT 岗位池，重点关注营销策划、品牌营销、整合营销、campaign、CRM 和消费者营销；优先快消、餐饮或小而美外企；城市优先上海、杭州；经验偏好 3-5 年或以上。"
+
+[[role_profiles]]
+id = "data-qa-ai"
+label = "数据 / QA / AI Trainer"
+enabled = true
+keywords = ["data analyst", "QA analyst", "quality analyst", "AI trainer", "data annotation", "product operations"]
+directions = ["数据", "QA", "AI Trainer", "运营"]
+preferred_regions = ["China", "Hong Kong", "Singapore", "APAC", "Asia", "Remote"]
+notes = "用于公共精选中的数据、质量和 AI 相关岗位池。"
+
+[[role_profiles]]
+id = "big-data-dev"
+label = "大数据开发 / 数据工程 / 数据平台"
+enabled = true
+keywords = ["Big Data Engineer", "Data Engineer", "Senior Data Engineer", "Data Platform Engineer", "Data Warehouse Engineer", "Spark Engineer", "Flink Engineer", "Hadoop Engineer", "Databricks Data Engineer"]
+directions = ["数据", "技术"]
+preferred_regions = ["China", "Hong Kong", "Singapore", "APAC", "Asia", "Remote"]
+notes = "定向精选常用岗位池，覆盖大数据开发、数据工程、数据平台、Spark、Flink、Hadoop、Databricks 和数据仓库。"
+
+[[role_profiles]]
+id = "tech-solutions"
+label = "技术支持 / 实施 / 解决方案"
+enabled = true
+keywords = ["technical support", "implementation consultant", "solutions engineer", "solutions architect", "sales engineer"]
+directions = ["技术支持", "实施", "解决方案", "技术"]
+preferred_regions = ["China", "Hong Kong", "Singapore", "APAC", "Asia", "Remote"]
+notes = "技术邻近岗位，优先选择对中国或 APAC 友好的外企岗位。"
+
+[[role_profiles]]
+id = "product-project-ba-pmo"
+label = "产品 / 项目 / BA / PMO"
+enabled = true
+keywords = ["Product Manager", "Product Owner", "Project Manager", "Product Designer", "Digital Transformation", "Business Analyst", "System Analyst", "PMO"]
+directions = ["产品", "项目管理", "需求分析", "系统分析", "解决方案"]
+preferred_regions = ["China", "Hong Kong", "Singapore", "APAC", "Asia", "Remote"]
+notes = "定向精选常用岗位池，覆盖产品、项目、业务分析、系统分析和 PMO。"
+
+[[role_profiles]]
+id = "sales-hr-supply"
+label = "销售 / HR / 供应链"
+enabled = true
+keywords = ["sales support", "business development", "account manager", "talent acquisition", "people operations", "supply chain", "procurement"]
+directions = ["销售支持", "销售", "HR", "供应链"]
+preferred_regions = ["China", "Hong Kong", "Singapore", "APAC", "Asia", "Remote"]
+notes = "公共精选补充岗位池，避免每天只集中在技术和产品方向。"
+
+[screening_rules]
+timezone_baseline = "UTC+8"
+max_timezone_difference_hours = 5
+overseas_jobs_must_be_remote = true
+prefer_regions = ["中国大陆", "香港", "新加坡", "马来西亚", "菲律宾", "日本", "韩国", "APAC", "Asia", "澳洲", "新西兰"]
+reject_regions = ["US-only", "Canada-only", "Latin America-only", "EU-only without Asia flexibility", "UK-only without Asia flexibility"]
+reject_industries = ["博彩", "成人行业", "灰产", "高风险加密货币", "刷单", "传销", "纯佣金高薪销售"]
+risk_keywords = ["upfront payment", "training fee", "deposit", "equipment purchase", "pay to apply", "commission only", "click farm", "fake review", "referral commission"]
+excluded_companies = ["Binance", "Crypto.com", "OKX", "TRM Labs", "Outlier", "DataAnnotation"]
+excluded_domains = ["binance.com", "crypto.com", "okx.com", "trmlabs.com", "outlier.ai", "dataannotation.tech"]
+
+[link_rules]
+must_be_specific_job_page = true
+must_show_matching_title = true
+must_show_company = true
+must_show_role_details = true
+must_have_application_path = true
+reject_homepages = true
+reject_search_pages = true
+reject_login_walls = true
+reject_closed_or_expired = true
+prefer_canonical_company_or_ats_url = true

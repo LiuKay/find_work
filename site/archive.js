@@ -7,6 +7,9 @@
   if (!form || !results || !count || !empty) return;
 
   let jobs = [];
+  const requestedChannel =
+    form.dataset.defaultChannel || new URLSearchParams(window.location.search).get("channel") || "";
+  if (form.elements.channel) form.elements.channel.value = requestedChannel;
 
   function normalize(value) {
     return (value || "").trim().toLowerCase();
@@ -30,6 +33,7 @@
     if (filters.confidence && job.chinaApplicability !== filters.confidence) return false;
     if (filters.experience && job.experience !== filters.experience) return false;
     if (filters.direction && job.direction !== filters.direction) return false;
+    if (filters.channel && !(Array.isArray(job.channels) && job.channels.includes(filters.channel))) return false;
     return true;
   }
 
@@ -76,6 +80,7 @@
       confidence: data.get("confidence") || "",
       experience: data.get("experience") || "",
       direction: data.get("direction") || "",
+      channel: data.get("channel") || "",
     };
   }
 
@@ -140,6 +145,9 @@
 
   form.addEventListener("input", render);
   form.addEventListener("reset", () => {
-    window.setTimeout(render, 0);
+    window.setTimeout(() => {
+      if (form.elements.channel) form.elements.channel.value = requestedChannel;
+      render();
+    }, 0);
   });
 })();

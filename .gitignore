@@ -3,7 +3,12 @@ node_modules/
 dist/
 
 # Local agent/tool state
-.agents/
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/daily-job-picks/
+!.agents/skills/daily-job-picks/**
+**/__pycache__/
 .claude/
 .codegraph/
 .gemini/

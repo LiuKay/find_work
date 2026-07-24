@@ -1,0 +1,26 @@
+{
+  "date": "2026-06-05",
+  "issue_id": "2026-06-05-mkt-no-sales-b2b-refresh",
+  "job_ids": [
+    "j_5691847c5e63",
+    "j_30c185a1cb16",
+    "j_2f18fb6e816d",
+    "j_2977d9646bfa",
+    "j_7b0f1bee6740",
+    "j_ac59d5639472",
+    "j_12252730a418",
+    "j_a80830e5089f",
+    "j_dccf87a56a45",
+    "j_27b7e6f7c159"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 10,
+    "directions": [
+      "内容",
+      "运营",
+      "项目管理"
+    ]
+  },
+  "title": "2026-06-05 MKT / 去销售去 B2B 补充 岗位专选"
+}

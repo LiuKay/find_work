@@ -1,0 +1,27 @@
+{
+  "date": "2026-06-06",
+  "issue_id": "2026-06-06-mkt-no-sales-b2b",
+  "job_ids": [
+    "j_a7fd728c946b",
+    "j_4137b77bdc9b",
+    "j_00c9df4005d6",
+    "j_1137811996ca",
+    "j_7fe6f7912f45",
+    "j_ee272d885dad",
+    "j_60e765be888b",
+    "j_4d634ef72696",
+    "j_a34bad4085fc",
+    "j_e60c83aad699"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 10,
+    "directions": [
+      "产品",
+      "内容",
+      "运营",
+      "项目管理"
+    ]
+  },
+  "title": "2026-06-06 MKT / 去销售去 B2B 岗位专选"
+}

@@ -1,0 +1,23 @@
+{
+  "date": "2026-06-27",
+  "issue_id": "2026-06-27-data-engineering-remote",
+  "job_ids": [
+    "j_25841269a248",
+    "j_7a0a58ad8110",
+    "j_e67e1af4e240",
+    "j_de3e89fa69ba",
+    "j_6166f77fda78",
+    "j_56b2865579d3",
+    "j_123bdccc8e67",
+    "j_3212328f90fe"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 8,
+    "directions": [
+      "技术",
+      "数据"
+    ]
+  },
+  "title": "2026-06-27 Data Engineering / Cloud-Native Data Engineering 岗位专选"
+}

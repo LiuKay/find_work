@@ -1,6 +1,28 @@
 # Find Work Pages
 
-把 `job-picks/*.md` 生成为可部署到 Cloudflare Pages 的静态网站。
+把终审岗位库存和每日精选笔记生成为可部署到 Cloudflare Pages 的静态网站。
+
+## 数据流
+
+```text
+data/candidates/YYYY-MM-DD.ndjson  内部发现与筛选记录，不进入 dist
+                  │ promoted
+                  ▼
+data/curated/jobs.ndjson           一行一岗的唯一权威库存
+                  │ issue job_ids
+                  ├──────────────► data/issues/<完整期次 slug>.json
+                  │
+                  └── active + 公开字段完整 ──► dist/assets/jobs.json
+                                               /pool/
+                                               /channels/<id>/
+
+job-picks/<完整期次 slug>.md        继续作为社群可读的每日精选笔记
+```
+
+公开构建只接受 `status=active` 且 `title`、`company`、`url`、
+`china_applicability`、`application_barrier`、`best_for` 完整的终审岗位。
+`candidates`、筛掉原因、内部 reviewer、`expired` 和 `closed` 均不会写入
+`dist/`。
 
 ## 本地使用
 
@@ -9,7 +31,84 @@ npm run build
 npm run dev
 ```
 
-构建输出目录是 `dist/`。本地预览默认地址是 `http://localhost:4173`。
+构建输出目录是 `dist/`。本地预览默认地址是 `http://127.0.0.1:4173`。
+
+构建会生成 `/pool/`、6 个画像频道以及 `jobs.json`、`issues.json`、
+`channels.json`。所有日期边界使用 `Asia/Shanghai`；需要复现历史构建时
+可临时设置 `POOL_AS_OF_DATE=YYYY-MM-DD`。
+
+## Curated CLI
+
+首次迁移或重新验证历史迁移的确定性：
+
+```bash
+python3 scripts/curated_jobs.py migrate --picks-dir job-picks --as-of 2026-07-23 --output data/curated/jobs.ndjson --issues-dir data/issues
+python3 scripts/curated_jobs.py check --output data/curated/jobs.ndjson --issues-dir data/issues
+```
+
+终审输出一次生成 Markdown、upsert curated 并写入完整 slug 的 issue：
+
+```bash
+python3 .agents/skills/daily-job-picks/scripts/format_daily_picks.py \
+  --input job-picks/2026-07-23-final-jobs.json \
+  --date 2026-07-23 \
+  --mode 公共精选 \
+  --output job-picks/2026-07-23.md \
+  --curated-output data/curated/jobs.ndjson \
+  --issues-dir data/issues
+```
+
+复验与过期：
+
+```bash
+python3 scripts/curated_jobs.py verify --output data/curated/jobs.ndjson --as-of 2026-07-23 --job-id j_xxxxxxxxxxxx --outcome open
+python3 scripts/curated_jobs.py verify --output data/curated/jobs.ndjson --as-of 2026-07-23 --job-id j_xxxxxxxxxxxx --outcome closed --reason "position filled"
+python3 scripts/curated_jobs.py expire --output data/curated/jobs.ndjson --as-of 2026-07-23
+python3 scripts/curated_jobs.py stats --date 2026-07-23
+```
+
+`verify --input <json-or-ndjson>` 可批量读取包含 `job_id`、`outcome`、
+`checked_at`、`check_id` 和可选 `reason` 的结果。明确关闭可以立即进入
+`closed`；单次网络错误、403、限流或超时只标记 `suspect`，两个不同
+`check_id` 的独立失败才关闭岗位。
+
+## 生命周期与 TTL
+
+- 默认 TTL：14 天。
+- 中国可投为高且属于外企中国岗位：21 天。
+- 合同工、兼职、AI Trainer、数据标注或中国可投待确认：7 天。
+- 被再次精选只更新 `last_featured_date`，不自动延长 TTL。
+- `active → expired`：到期仍未复验。
+- `active → closed`：明确关闭，或连续两次独立复验失败。
+- `expired → active`：复验确认仍可投，并从复验日重新计算 TTL。
+
+## 一日 Checklist
+
+1. 校验 daily-job-picks source config。
+2. 将当天发现结果原子写入 `data/candidates/YYYY-MM-DD.ndjson`。
+3. 按 stable `job_id` 检查 `seen-jobs.tsv` 与 `bad-links.tsv`。
+4. 对入选岗位逐个完成终审和直达链接检查。
+5. 用上面的 `format_daily_picks.py` 单命令写 Markdown、curated 和 issue。
+6. 对临期或超过 3 天未验的 active 岗位执行 `verify`。
+7. 执行 `expire`、`check` 和 `stats`。
+8. 运行完整验证：
+
+```bash
+python3 -m unittest discover -s tests -p 'test_curated_jobs.py'
+npm test
+POOL_AS_OF_DATE=2026-07-23 npm run build
+```
+
+9. 本地检查首页、可投库、6 个频道、问卷推荐及移动端布局。
+
+## 故障恢复
+
+- NDJSON 写入会先全量校验，再写同目录临时文件并原子替换；命令失败时旧库存保持不变。
+- `check` 失败时不要构建或手工删除冲突记录，先按报错的 `job_id` /
+  `issue_id` 修复源文件后重跑。
+- 单次网络异常保持岗位 active 并标记 suspect，人工复核后再提交下一次独立结果。
+- 历史迁移可重复执行；同一输入应生成字节一致的 curated 和 issues。
+- 构建失败时先恢复到最后一次通过 `check` 的库存，再重新运行测试和构建。
 
 ## Cloudflare Pages 设置
 

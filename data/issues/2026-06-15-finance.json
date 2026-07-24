@@ -1,0 +1,23 @@
+{
+  "date": "2026-06-15",
+  "issue_id": "2026-06-15-finance",
+  "job_ids": [
+    "j_a20cdd99c0c0",
+    "j_ffe24f801e50",
+    "j_11f32df0cf49",
+    "j_cb784682dca3",
+    "j_bd78e862a76b",
+    "j_6f6d38222773",
+    "j_994a83c108b6"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 7,
+    "directions": [
+      "客服",
+      "数据",
+      "运营"
+    ]
+  },
+  "title": "2026-06-15 财务相关岗位专选"
+}
