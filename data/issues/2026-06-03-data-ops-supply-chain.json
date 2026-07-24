@@ -1,0 +1,22 @@
+{
+  "date": "2026-06-03",
+  "issue_id": "2026-06-03-data-ops-supply-chain",
+  "job_ids": [
+    "j_b66d425470b9",
+    "j_6a8ad09d6c90",
+    "j_bd3004488e74",
+    "j_5a4f038e6c91",
+    "j_9ff277f71392",
+    "j_1c8bb7ac41be"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 6,
+    "directions": [
+      "供应链",
+      "数据",
+      "运营"
+    ]
+  },
+  "title": "2026-06-03 数据运营/报表自动化 + 采购供应链数据 岗位专选"
+}

@@ -1,4 +1,20 @@
+function recommendSurveyChannels(payload) {
+  const categories = (payload.jobCategories || []).join(" ");
+  const workModes = (payload.workModes || []).join(" ");
+  const experience = (payload.experienceLevels || []).join(" ");
+  const recommendations = [];
+  if (/客服|客户成功|运营|销售|市场/.test(categories)) recommendations.push("ops-cs");
+  if (/技术|开发|QA|测试|需求分析|系统分析|产品经理/.test(categories)) recommendations.push("support-tech");
+  if (/远程/.test(workModes)) recommendations.push("remote-apac");
+  if (/尽量低英文/.test(payload.englishLevel || "")) recommendations.push("low-english");
+  if (/入门/.test(experience) || /低门槛/.test(payload.difficultyLevel || "")) recommendations.push("entry");
+  if (/中国远程|中国本地办公/.test(workModes)) recommendations.push("china-strong");
+  if (!recommendations.length) recommendations.push("china-strong");
+  return Array.from(new Set(recommendations));
+}
+
 (function () {
+  if (typeof document === "undefined") return;
   const OPTIONS = {
     jobCategories: [
       "客服",
@@ -27,6 +43,7 @@
 
   const form = document.querySelector("[data-survey-form]");
   const status = document.querySelector("[data-survey-status]");
+  const recommendationBox = document.querySelector("[data-channel-recommendations]");
   const turnstileBox = document.querySelector("[data-turnstile-box]");
   const submitButton = document.querySelector("[data-submit-survey]");
 
@@ -49,6 +66,26 @@
     status.hidden = false;
     status.textContent = message;
     status.dataset.statusType = type || "info";
+  }
+
+  function renderChannelRecommendations(payload) {
+    if (!recommendationBox || !payload) return;
+    const labels = {
+      "low-english": "低英文友好",
+      "ops-cs": "运营 / 客服 / 客户成功",
+      "support-tech": "技术支持 / IT",
+      "remote-apac": "时区友好远程",
+      entry: "入门 / 低门槛",
+      "china-strong": "中国可投高把握",
+    };
+    const channels = recommendSurveyChannels(payload);
+    recommendationBox.hidden = false;
+    recommendationBox.innerHTML = `<strong>按你的选择，可以先看：</strong><div>${channels
+      .map(
+        (channel) =>
+          `<a href="/channels/${escapeHtml(channel)}/">${escapeHtml(labels[channel])}</a>`
+      )
+      .join("")}</div>`;
   }
 
   function getVoterId() {
@@ -211,7 +248,10 @@
       if (!response.ok) throw new Error("load failed");
       const data = await response.json();
       applyResponse(data.response);
-      if (data.response) showStatus("已载入你之前提交的问卷，可以直接修改后重新提交。", "info");
+      if (data.response) {
+        showStatus("已载入你之前提交的问卷，可以直接修改后重新提交。", "info");
+        renderChannelRecommendations(data.response);
+      }
     } catch (error) {
       showStatus("暂时无法读取已提交问卷；你仍然可以填写并提交。", "info");
     }
@@ -240,6 +280,7 @@
 
       window.localStorage.setItem(nameKey, payload.voterName);
       renderCurrentSelection(payload);
+      renderChannelRecommendations(payload);
       resetTurnstile();
     } catch (error) {
       showStatus(error.message || "提交失败，请稍后重试。", "error");
@@ -254,3 +295,5 @@
   loadExistingResponse();
   window.addEventListener("load", initTurnstile);
 })();
+
+if (typeof module !== "undefined") module.exports = { recommendSurveyChannels };

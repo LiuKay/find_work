@@ -1,0 +1,26 @@
+{
+  "date": "2026-06-15",
+  "issue_id": "2026-06-15-mkt-no-sales-b2b",
+  "job_ids": [
+    "j_8ac65331b7a3",
+    "j_b7af35c8514c",
+    "j_2739cf084ddd",
+    "j_c610be781a27",
+    "j_9d659a483b96",
+    "j_e8431063fbc4",
+    "j_29d74babff66",
+    "j_a5a86ce55dcb",
+    "j_33207fbd045b",
+    "j_73e39d012f72"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 10,
+    "directions": [
+      "其他",
+      "内容",
+      "运营"
+    ]
+  },
+  "title": "2026-06-15 mkt 岗位专选"
+}

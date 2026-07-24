@@ -1,13 +1,25 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const ROOT = path.resolve(__dirname, "..");
 const PICKS_DIR = path.join(ROOT, "job-picks");
+const CURATED_FILE = path.join(ROOT, "data", "curated", "jobs.ndjson");
+const ISSUES_DIR = path.join(ROOT, "data", "issues");
 const ABOUT_FILE = path.join(ROOT, "about.md");
 const DIST_DIR = path.join(ROOT, "dist");
 const SITE_DIR = path.join(ROOT, "site");
 const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || "";
 const ASSET_VERSION = process.env.CF_PAGES_COMMIT_SHA || "local";
+const POOL_DAYS = 14;
+const CHANNELS = [
+  { id: "low-english", name: "低英文友好", description: "中文、双语或明确低英文门槛的岗位。" },
+  { id: "ops-cs", name: "运营 / 客服 / 客户成功", description: "偏运营、客服与客户成功的岗位。" },
+  { id: "support-tech", name: "技术支持 / IT", description: "技术支持、IT 运营与 QA 岗位。" },
+  { id: "remote-apac", name: "时区友好远程", description: "远程且与中国或 APAC 工作时段较友好的岗位。" },
+  { id: "entry", name: "入门 / 低门槛", description: "入门阶段或申请门槛较低的岗位。" },
+  { id: "china-strong", name: "中国可投高把握", description: "中国可投把握为高的岗位。" },
+];
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -155,6 +167,22 @@ function extractMarkdownUrl(value) {
   return bareUrl ? bareUrl[0] : "";
 }
 
+function normalizeJobUrl(value) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    for (const key of Array.from(url.searchParams.keys())) {
+      if (/^(utm_|gh_src$|source$)/i.test(key)) url.searchParams.delete(key);
+    }
+    url.searchParams.sort();
+    url.pathname = url.pathname.replace(/\/+$/, "");
+    return url.toString();
+  } catch {
+    return value.trim();
+  }
+}
+
 function readStructuredJobs(slug) {
   const filePath = path.join(PICKS_DIR, `${slug}-final-jobs.json`);
   if (!fs.existsSync(filePath)) return [];
@@ -253,11 +281,15 @@ function extractJobs(pick) {
   if (current) blocks.push(current);
   return blocks.map((block, index) => {
     const job = parseJobBlock(block, pick, index);
-    const structured = pick.structuredJobs.find((item) => item.title === job.title) || pick.structuredJobs[index] || {};
+    const jobUrl = normalizeJobUrl(job.link);
+    const structured =
+      pick.structuredJobs.find((item) => jobUrl && normalizeJobUrl(item.url) === jobUrl) ||
+      pick.structuredJobs.find((item) => item.title === job.title) ||
+      {};
     return {
       ...job,
-      applicationBarrier: plainMarkdown(structured.application_barrier || ""),
-      chinaApplicability: plainMarkdown(structured.china_applicability || ""),
+      applicationBarrier: plainMarkdown(structured.application_barrier || job.threshold),
+      chinaApplicability: plainMarkdown(structured.china_applicability || job.confidence),
     };
   });
 }
@@ -305,6 +337,209 @@ function readAboutPage() {
 
 function uniqueValues(values) {
   return Array.from(new Set(values.filter(Boolean)));
+}
+
+function poolAsOfDate() {
+  return (
+    process.env.POOL_AS_OF_DATE ||
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(new Date())
+  );
+}
+
+function poolCutoffDate(asOfDate) {
+  const date = new Date(`${asOfDate}T00:00:00Z`);
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(asOfDate) ||
+    Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== asOfDate
+  ) {
+    throw new Error(`Invalid POOL_AS_OF_DATE: ${asOfDate}`);
+  }
+  date.setUTCDate(date.getUTCDate() - (POOL_DAYS - 1));
+  return date.toISOString().slice(0, 10);
+}
+
+function buildPoolJobs(picks, asOfDate = poolAsOfDate()) {
+  const cutoff = poolCutoffDate(asOfDate);
+  const jobsByIdentity = new Map();
+
+  for (const pick of picks.filter((item) => item.date <= asOfDate)) {
+    for (const job of extractJobs(pick)) {
+      const chinaApplicability = String(job.chinaApplicability).match(/^(高|中|低|待确认|不明确)/)?.[0];
+      const applicationBarrier = String(job.applicationBarrier).match(/^(高|中|低)/)?.[0] || "待确认";
+      if (!job.title || !job.company || !job.link || !chinaApplicability || !job.applicationBarrier || !job.fit) {
+        continue;
+      }
+
+      // ponytail: direct-link identity is enough until redirects create measurable duplicate noise.
+      const identity = normalizeJobUrl(job.link);
+      const jobId = `j_${crypto.createHash("sha256").update(identity).digest("hex").slice(0, 12)}`;
+      const existing = jobsByIdentity.get(identity);
+
+      if (existing) {
+        existing.firstSeenDate = [existing.firstSeenDate, job.date].sort()[0];
+        existing.lastFeaturedDate = [existing.lastFeaturedDate, job.date].sort().reverse()[0];
+        if (!existing.featuredIssueSlugs.includes(job.issueSlug)) existing.featuredIssueSlugs.push(job.issueSlug);
+        continue;
+      }
+
+      jobsByIdentity.set(identity, {
+        ...job,
+        id: jobId,
+        applicationBarrier,
+        chinaApplicability,
+        firstSeenDate: job.date,
+        lastFeaturedDate: job.date,
+        featuredIssueSlugs: [job.issueSlug],
+      });
+    }
+  }
+
+  const applicabilityRank = { 高: 3, 中: 2, 低: 1 };
+  return Array.from(jobsByIdentity.values())
+    .filter((job) => job.lastFeaturedDate >= cutoff)
+    .sort((a, b) => {
+      const rank = (job) => applicabilityRank[String(job.chinaApplicability).match(/高|中|低/)?.[0]] || 0;
+      return rank(b) - rank(a) || b.lastFeaturedDate.localeCompare(a.lastFeaturedDate);
+    });
+}
+
+function readNdjson(filePath) {
+  if (!fs.existsSync(filePath)) return [];
+  return fs
+    .readFileSync(filePath, "utf8")
+    .split("\n")
+    .filter((line) => line.trim())
+    .map((line) => JSON.parse(line));
+}
+
+function readIssues(issuesDir = ISSUES_DIR) {
+  if (!fs.existsSync(issuesDir)) return [];
+  return fs
+    .readdirSync(issuesDir)
+    .filter((file) => file.endsWith(".json"))
+    .sort()
+    .map((file) => JSON.parse(fs.readFileSync(path.join(issuesDir, file), "utf8")));
+}
+
+function isPublicCuratedJob(job) {
+  let safeUrl = false;
+  try {
+    const parsed = new URL(String(job && job.url ? job.url : ""));
+    safeUrl = ["http:", "https:"].includes(parsed.protocol) && Boolean(parsed.hostname);
+  } catch {
+    safeUrl = false;
+  }
+  return (
+    job &&
+    job.status === "active" &&
+    safeUrl &&
+    ["title", "company", "url", "china_applicability", "application_barrier", "best_for"].every(
+      (field) => String(job[field] || "").trim()
+    )
+  );
+}
+
+function publicJobFromCurated(job, issueById) {
+  const featuredIssueSlugs = Array.isArray(job.featured_issue_ids) ? job.featured_issue_ids : [];
+  const issueSlug = featuredIssueSlugs[featuredIssueSlugs.length - 1] || "";
+  const issue = issueById.get(issueSlug) || {};
+  const searchText = [
+    job.last_featured_date,
+    job.title,
+    job.company,
+    job.job_direction,
+    job.work_mode,
+    job.experience,
+    job.language,
+    job.china_applicability,
+    job.application_barrier,
+    job.best_for,
+    job.notes,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return {
+    id: job.job_id,
+    date: job.last_featured_date,
+    firstSeenDate: job.first_seen_date,
+    lastFeaturedDate: job.last_featured_date,
+    featuredIssueSlugs,
+    issueSlug,
+    issueTitle: issue.title || issueSlug,
+    issueUrl: issueSlug ? `/picks/${issueSlug}/` : "/archive/",
+    title: job.title,
+    company: job.company,
+    direction: job.job_direction || "",
+    workMode: job.work_mode || "",
+    experience: job.experience || "",
+    language: job.language || "",
+    applicationBarrier: job.application_barrier,
+    chinaApplicability: job.china_applicability,
+    threshold: job.application_barrier_note || job.application_barrier,
+    confidence: [job.china_applicability, job.china_applicability_note].filter(Boolean).join("，"),
+    timezone: job.timezone_judgment || "",
+    timezoneFriendly: Boolean(job.timezone_friendly),
+    fit: job.best_for,
+    notes: job.notes || "",
+    link: job.url,
+    channels: Array.isArray(job.channels) ? job.channels : [],
+    searchText,
+  };
+}
+
+function buildPublicJobs(curatedJobs, issues) {
+  const issueById = new Map(issues.map((issue) => [issue.issue_id, issue]));
+  const applicabilityRank = { 高: 3, 中: 2, 待确认: 1, 低: 0, 不明确: 0 };
+  return curatedJobs
+    .filter(isPublicCuratedJob)
+    .map((job) => publicJobFromCurated(job, issueById))
+    .sort(
+      (a, b) =>
+        (applicabilityRank[b.chinaApplicability] || 0) - (applicabilityRank[a.chinaApplicability] || 0) ||
+        b.lastFeaturedDate.localeCompare(a.lastFeaturedDate) ||
+        a.id.localeCompare(b.id)
+    );
+}
+
+function matchesChannel(job, channelId) {
+  return Array.isArray(job.channels) && job.channels.includes(channelId);
+}
+
+function buildPublicIssues(issues, publicJobs) {
+  const publicIds = new Set(publicJobs.map((job) => job.id));
+  const publicById = new Map(publicJobs.map((job) => [job.id, job]));
+  return issues
+    .map((issue) => {
+      const jobIds = (issue.job_ids || []).filter((jobId) => publicIds.has(jobId));
+      return {
+        issue_id: issue.issue_id,
+        title: issue.title,
+        mode: issue.mode,
+        date: issue.date,
+        job_ids: jobIds,
+        stats: {
+          count: jobIds.length,
+          directions: [...new Set(jobIds.map((jobId) => publicById.get(jobId).direction).filter(Boolean))].sort(),
+        },
+      };
+    })
+    .sort((a, b) => b.date.localeCompare(a.date) || b.issue_id.localeCompare(a.issue_id));
+}
+
+function buildPublicChannels(publicJobs, asOfDate) {
+  return CHANNELS.map((channel) => {
+    const jobs = publicJobs.filter((job) => matchesChannel(job, channel.id));
+    return {
+      ...channel,
+      count: jobs.length,
+      today_count: jobs.filter((job) => job.lastFeaturedDate === asOfDate).length,
+      path: `/channels/${channel.id}/`,
+      pool_path: `/pool/?channel=${channel.id}`,
+    };
+  });
 }
 
 function issueTag(title) {
@@ -485,6 +720,7 @@ function pageTemplate({ title, description, body, canonicalPath = "/", scripts =
     </a>
     <nav class="site-nav" aria-label="主导航">
       <a href="/">最新</a>
+      <a href="/pool/">可投</a>
       <a href="/archive/">归档</a>
       <a href="/survey/">问卷</a>
       <a href="/about/">关于</a>
@@ -567,52 +803,66 @@ function renderPickPage(pick) {
   });
 }
 
-function renderIndex(picks) {
+function renderIndex(picks, poolJobs, publicIssues, channels, asOfDate) {
   const latest = picks[0];
-  const latestJobs = latest ? extractJobs(latest) : [];
-  const latestSummary = latestIssueSummary(latestJobs);
-  const archiveItems = picks
-    .slice(0, 8)
+  const latestSummary = latestIssueSummary(latest ? extractJobs(latest) : []);
+  const latestUpdateDate = publicIssues[0]?.date || asOfDate;
+  const todayIds = new Set(
+    publicIssues.filter((issue) => issue.date === latestUpdateDate).flatMap((issue) => issue.job_ids)
+  );
+  const todayJobs = poolJobs.filter((job) => todayIds.has(job.id));
+  const byDirection = new Map();
+  for (const job of todayJobs) {
+    const direction = job.direction || "其他";
+    if (!byDirection.has(direction)) byDirection.set(direction, []);
+    byDirection.get(direction).push(job);
+  }
+  const todayGroups = Array.from(byDirection.entries())
     .map(
-      (pick) => `<li>
-        <a href="/picks/${pick.slug}/">
-          ${renderIssueMeta(pick)}
-          <span>${escapeHtml(pick.title)}</span>
-          <time>${escapeHtml(pick.date)}</time>
+      ([direction, jobs]) => `<section class="today-group">
+        <h3>${escapeHtml(direction)}</h3>
+        <ul>${jobs
+          .map(
+            (job) => `<li data-job-id="${escapeHtml(job.id)}">
+              <a href="${escapeHtml(job.issueUrl)}">${escapeHtml(job.title)}</a>
+              <span>${escapeHtml(job.company)}</span>
+              <small>${escapeHtml(job.chinaApplicability)} · ${escapeHtml(job.fit)}</small>
+            </li>`
+          )
+          .join("")}</ul>
+      </section>`
+    )
+    .join("");
+  const channelCards = channels
+    .map(
+      (channel) => `<a class="channel-card" href="${escapeHtml(channel.path)}">
+        <span>${escapeHtml(channel.name)}</span>
+        <strong>${channel.count} 个</strong>
+        <small>${escapeHtml(channel.description)}${channel.today_count ? ` 今日 +${channel.today_count}` : ""}</small>
+      </a>`
+    )
+    .join("");
+  const recentIssues = publicIssues
+    .slice(0, 5)
+    .map(
+      (issue) => `<li>
+        <a href="/picks/${escapeHtml(issue.issue_id)}/">
+          <time>${escapeHtml(issue.date)}</time>
+          <span>${escapeHtml(issue.title)}</span>
+          <small>${issue.job_ids.length} 个仍在库</small>
         </a>
       </li>`
     )
-    .join("\n");
-
-  const latestBlock = latest
-    ? `<aside class="latest-panel" aria-label="最新精选">
-        <div class="section-kicker">最新一期</div>
-        <h2>${escapeHtml(latest.title)}</h2>
-        <div class="latest-summary" aria-label="本期岗位摘要">
-          <strong>${escapeHtml(latestSummary.countText)}</strong>
-          <span>${escapeHtml(latestSummary.fitText)}</span>
-          <div class="summary-tags">
-            ${latestSummary.directions
-              .map((direction) => `<span>${escapeHtml(direction)}</span>`)
-              .join("")}
-          </div>
-        </div>
-        <div class="home-actions">
-          <a class="primary-link" href="/picks/${latest.slug}/">打开最新精选</a>
-        </div>
-        <p class="trust-note">申请前请以原岗位页面为准。</p>
-      </aside>`
-    : `<aside class="latest-panel"><h2>还没有岗位精选</h2><p>把 Markdown 文件放入 job-picks 后重新构建。</p></aside>`;
+    .join("");
 
   return pageTemplate({
     title: "Find Work 外企/远程岗位精选",
-    description: "面向朋友分享的外企、APAC 和海外远程岗位精选归档。",
+    description: "今日上新、滚动可投库与按情况整理的外企和远程岗位频道。",
     body: `<main>
   <section class="home-hero" aria-labelledby="home-hero-title">
     <div class="hero-copy">
-      <div class="section-kicker">社群筛选笔记</div>
       <h1 id="home-hero-title">外企 / 远程岗位筛选台</h1>
-      <p>每天把适合中国申请者的外企、APAC 和海外远程岗位拆成可筛选的方向、语言、门槛和可投把握。</p>
+      <p>先看今天新增，再按你的语言、经验、工作方式和中国可投把握继续筛。</p>
       <div class="fit-dimensions hero-dimensions" aria-label="可筛选条件">
         <span>岗位方向</span>
         <span>工作方式</span>
@@ -622,23 +872,35 @@ function renderIndex(picks) {
         <span>中国可投把握</span>
       </div>
       <div class="home-actions">
-        <a class="primary-link hero-primary" href="/archive/">进入岗位筛选</a>
-        ${latest ? `<a class="text-link hero-secondary" href="/picks/${latest.slug}/">看最新一期</a>` : ""}
+        <a class="primary-link hero-primary" href="/pool/">查看 ${poolJobs.length} 个可投岗位</a>
+        <a class="text-link hero-secondary" href="/archive/">阅读精选期次</a>
       </div>
     </div>
-    ${latestBlock}
-  </section>
-  <section class="home-grid">
-    <aside class="archive-panel" aria-label="近期归档">
-      <h2>近期更新</h2>
-      <ol class="archive-list">${archiveItems}</ol>
-      <a class="secondary-link" href="/archive/">查看全部</a>
+    <aside class="latest-panel home-today-summary" aria-label="最新精选">
+      <div class="section-kicker">最新一期</div>
+      <h2>${latest ? escapeHtml(latest.title) : "还没有岗位精选"}</h2>
+      <div class="latest-summary" aria-label="本期岗位摘要">
+        <strong>${escapeHtml(latestSummary.countText)}</strong>
+        <span>${escapeHtml(latestSummary.fitText)}</span>
+        <div class="summary-tags">
+          ${latestSummary.directions.map((direction) => `<span>${escapeHtml(direction)}</span>`).join("")}
+        </div>
+      </div>
+      ${latest ? `<a class="secondary-link" href="/picks/${escapeHtml(latest.slug)}/">打开最新精选</a>` : ""}
+      <p class="trust-note">申请前请以原岗位页面为准。</p>
     </aside>
-    <section class="fit-entry" aria-labelledby="fit-entry-title">
-      <h2 id="fit-entry-title">找适合我的岗位</h2>
-      <p>归档页可以按发布时间、关键词、英文要求、工作方式、申请门槛、可投把握、经验要求和岗位方向筛选。</p>
-      <a class="primary-link" href="/archive/">进入岗位筛选</a>
-    </section>
+  </section>
+  <section class="editorial-section" id="today-jobs" aria-labelledby="today-title">
+    <div class="editorial-heading"><div><div class="section-kicker">Today</div><h2 id="today-title">最新更新 <small>${escapeHtml(latestUpdateDate)}</small></h2></div><span>${todayJobs.length} 个</span></div>
+    <div class="today-groups">${todayGroups || '<p class="home-empty">今天暂时没有新的终审岗位，可以先查看滚动可投库。</p>'}</div>
+  </section>
+  <section class="editorial-section" aria-labelledby="channels-title">
+    <div class="editorial-heading"><div><div class="section-kicker">By Situation</div><h2 id="channels-title">按分类查看</h2></div><a href="/pool/">查看全部可投库</a></div>
+    <div class="channel-grid">${channelCards}</div>
+  </section>
+  <section class="editorial-section" aria-labelledby="recent-issues-title">
+    <div class="editorial-heading"><div><div class="section-kicker">Recent Notes</div><h2 id="recent-issues-title">最近更新</h2></div><a href="/archive/">查看归档</a></div>
+    <ol class="recent-issue-list">${recentIssues || '<li class="home-empty">还没有可阅读的精选期次。</li>'}</ol>
   </section>
 </main>`,
   });
@@ -676,15 +938,38 @@ function renderArchive(picks) {
     body: `<main class="archive-layout">
   <div class="section-kicker">All Issues</div>
   <h1>岗位精选归档</h1>
+  <p>按日期阅读每天的筛选笔记。想按条件找近期岗位，请前往 <a href="/pool/">可投库</a>。</p>
+  <section class="issue-archive" aria-labelledby="issue-archive-title">
+  <h2 id="issue-archive-title">每日归档</h2>
+  <ol class="full-archive-list">${items}</ol>
+  </section>
+</main>`,
+  });
+}
+
+function renderPool(asOfDate, channel = null) {
+  const pageTitle = channel ? channel.name : `近 ${POOL_DAYS} 天可投库`;
+  const pageDescription = channel
+    ? channel.description
+    : `近 ${POOL_DAYS} 天完成筛选、适合中国申请者继续判断的外企和远程岗位。`;
+  return pageTemplate({
+    title: `${pageTitle} | Find Work`,
+    description: pageDescription,
+    canonicalPath: channel ? `/channels/${channel.id}/` : "/pool/",
+    body: `<main class="archive-layout">
+  <div class="section-kicker">${channel ? "Situation Channel" : "Active Pool"}</div>
+  <h1>${escapeHtml(pageTitle)}</h1>
+  ${channel ? `<p class="channel-intro">${escapeHtml(channel.description)} <a href="/pool/?channel=${escapeHtml(channel.id)}">在完整可投库中查看同一筛选</a></p>` : ""}
   <section class="job-filter" aria-labelledby="job-filter-title">
     <div class="filter-heading">
       <div>
         <h2 id="job-filter-title">岗位筛选</h2>
-        <p>按发布时间和岗位关键词检索历史发布记录。</p>
+        <p>截至 ${escapeHtml(asOfDate)}，仅收录判断字段完整的近期岗位；申请前请以原页面为准。</p>
       </div>
       <span class="job-count" data-job-count>读取中</span>
     </div>
-    <form class="filter-controls" data-job-filter>
+    <form class="filter-controls" data-job-filter data-default-channel="${channel ? escapeHtml(channel.id) : ""}">
+      <input type="hidden" name="channel" value="${channel ? escapeHtml(channel.id) : ""}">
       <label>
         <span>关键词</span>
         <input type="search" name="query" placeholder="岗位、公司、方向" autocomplete="off">
@@ -736,11 +1021,7 @@ function renderArchive(picks) {
       <button type="reset">清空</button>
     </form>
     <div class="job-results" data-job-results aria-live="polite"></div>
-    <p class="filter-empty" data-job-empty hidden>没有匹配的岗位，试试放宽日期或关键词。</p>
-  </section>
-  <section class="issue-archive" aria-labelledby="issue-archive-title">
-  <h2 id="issue-archive-title">每日归档</h2>
-  <ol class="full-archive-list">${items}</ol>
+    <p class="filter-empty" data-job-empty hidden>没有匹配的岗位，试试放宽条件。</p>
   </section>
 </main>`,
     scripts: [`/assets/archive.js`],
@@ -760,6 +1041,7 @@ function renderSurvey() {
   </section>
   <section class="survey-panel" aria-labelledby="survey-form-title">
     <div class="survey-status" data-survey-status hidden></div>
+    <aside class="survey-recommendations" data-channel-recommendations hidden aria-live="polite"></aside>
     <form class="survey-form" data-survey-form data-turnstile-site-key="${escapeHtml(TURNSTILE_SITE_KEY)}">
       <div class="form-section">
         <h2 id="survey-form-title">你的基本信息</h2>
@@ -904,13 +1186,28 @@ function main() {
   copyAssets();
 
   const picks = getPickFiles().map(readPick);
-  const jobs = picks.flatMap(extractJobs);
-  writePage("index.html", renderIndex(picks));
+  const asOfDate = poolAsOfDate();
+  if (!fs.existsSync(CURATED_FILE)) {
+    throw new Error("Missing data/curated/jobs.ndjson; run scripts/curated_jobs.py migrate first.");
+  }
+  const curatedJobs = readNdjson(CURATED_FILE);
+  const issues = readIssues();
+  const poolJobs = buildPublicJobs(curatedJobs, issues);
+  const publicIssues = buildPublicIssues(issues, poolJobs);
+  const publicChannels = buildPublicChannels(poolJobs, asOfDate);
+  writePage("index.html", renderIndex(picks, poolJobs, publicIssues, publicChannels, asOfDate));
   writePage(path.join("about", "index.html"), renderAbout(readAboutPage()));
+  writePage(path.join("pool", "index.html"), renderPool(asOfDate));
   writePage(path.join("archive", "index.html"), renderArchive(picks));
   writePage(path.join("survey", "index.html"), renderSurvey());
   writePage(path.join("survey-admin", "index.html"), renderSurveyAdmin());
-  fs.writeFileSync(path.join(DIST_DIR, "assets", "jobs.json"), `${JSON.stringify(jobs, null, 2)}\n`);
+  fs.writeFileSync(path.join(DIST_DIR, "assets", "jobs.json"), `${JSON.stringify(poolJobs, null, 2)}\n`);
+  fs.writeFileSync(path.join(DIST_DIR, "assets", "issues.json"), `${JSON.stringify(publicIssues, null, 2)}\n`);
+  fs.writeFileSync(path.join(DIST_DIR, "assets", "channels.json"), `${JSON.stringify(publicChannels, null, 2)}\n`);
+
+  for (const channel of CHANNELS) {
+    writePage(path.join("channels", channel.id, "index.html"), renderPool(asOfDate, channel));
+  }
 
   for (const pick of picks) {
     writePage(path.join("picks", pick.slug, "index.html"), renderPickPage(pick));
@@ -926,7 +1223,22 @@ function main() {
     `${JSON.stringify({ version: 1, include: ["/api/*"], exclude: [] }, null, 2)}\n`
   );
 
-  console.log(`Built ${picks.length} job pick page(s) and ${jobs.length} job record(s) into dist/`);
+  console.log(
+    `Built ${picks.length} job pick page(s), ${poolJobs.length} active pool job(s), and ${CHANNELS.length} channel(s) into dist/`
+  );
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = {
+  CHANNELS,
+  buildPoolJobs,
+  buildPublicChannels,
+  buildPublicIssues,
+  buildPublicJobs,
+  isPublicCuratedJob,
+  matchesChannel,
+  normalizeJobUrl,
+  poolCutoffDate,
+  publicJobFromCurated,
+};

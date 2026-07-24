@@ -1,0 +1,19 @@
+{
+  "date": "2026-05-28",
+  "issue_id": "2026-05-28-low-english",
+  "job_ids": [
+    "j_76bf2297a88b",
+    "j_60e884d5ec5e",
+    "j_f7029b179ff0",
+    "j_5095b50014d9"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 4,
+    "directions": [
+      "AI Trainer",
+      "本地化"
+    ]
+  },
+  "title": "2026-05-28 英文门槛较低岗位专选"
+}

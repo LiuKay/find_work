@@ -1,0 +1,28 @@
+{
+  "date": "2026-06-19",
+  "issue_id": "2026-06-19",
+  "job_ids": [
+    "j_0e0226632ba7",
+    "j_39fa71e1d05f",
+    "j_74f6c3a8f12d",
+    "j_35ebb2f4b353",
+    "j_31eb8013199d",
+    "j_d4a1e2c6b43c",
+    "j_3fb8863dbc3d",
+    "j_3cc50dc2ec25",
+    "j_9fde0b13b78f",
+    "j_47a3bf73834d"
+  ],
+  "mode": "public",
+  "stats": {
+    "count": 10,
+    "directions": [
+      "HR",
+      "QA",
+      "内容",
+      "技术",
+      "运营"
+    ]
+  },
+  "title": "2026-06-19 外企/海外远程岗位精选"
+}

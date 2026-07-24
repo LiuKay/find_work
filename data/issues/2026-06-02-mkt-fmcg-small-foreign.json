@@ -1,0 +1,27 @@
+{
+  "date": "2026-06-02",
+  "issue_id": "2026-06-02-mkt-fmcg-small-foreign",
+  "job_ids": [
+    "j_0b0d42b29562",
+    "j_4df8c9f637e3",
+    "j_b1b124351e5c",
+    "j_f4a9215aa556",
+    "j_e11972952278",
+    "j_e3a109addfd2",
+    "j_e44acdc91e5f",
+    "j_2dc21bb066f2",
+    "j_8ecd2e4d1f38",
+    "j_b2bccbc1c7e6"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 10,
+    "directions": [
+      "产品",
+      "内容",
+      "运营",
+      "销售"
+    ]
+  },
+  "title": "2026-06-02 MKT / 快消餐饮 / 小而美外企补充 岗位专选"
+}

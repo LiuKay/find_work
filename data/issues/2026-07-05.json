@@ -1,0 +1,24 @@
+{
+  "date": "2026-07-05",
+  "issue_id": "2026-07-05",
+  "job_ids": [
+    "j_545c996c6959",
+    "j_04e0ddd2fe91",
+    "j_a2dbff05ac6c",
+    "j_dfcced7cddc6",
+    "j_e3cfe64c31cf",
+    "j_cf5ed1d61a7c"
+  ],
+  "mode": "public",
+  "stats": {
+    "count": 6,
+    "directions": [
+      "客服",
+      "技术支持",
+      "本地化",
+      "运营",
+      "销售"
+    ]
+  },
+  "title": "2026-07-05 外企/海外远程岗位精选"
+}

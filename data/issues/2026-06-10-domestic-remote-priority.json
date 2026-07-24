@@ -1,0 +1,26 @@
+{
+  "date": "2026-06-10",
+  "issue_id": "2026-06-10-domestic-remote-priority",
+  "job_ids": [
+    "j_1c705232ea0f",
+    "j_33db32c447ef",
+    "j_bc3f3b739f55",
+    "j_f8e5e323252e",
+    "j_4058258b6d73",
+    "j_4b92a44ff104",
+    "j_d20fe0ae3be4",
+    "j_9127307a667b"
+  ],
+  "mode": "targeted",
+  "stats": {
+    "count": 8,
+    "directions": [
+      "其他",
+      "内容",
+      "客服",
+      "技术",
+      "运营"
+    ]
+  },
+  "title": "2026-06-10 国内可远程优先 岗位专选"
+}
