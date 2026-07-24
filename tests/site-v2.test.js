@@ -24,7 +24,7 @@ const issues = fs
 
 const publicJobs = buildPublicJobs(curated, issues);
 const publicIssues = buildPublicIssues(issues, publicJobs);
-const publicChannels = buildPublicChannels(publicJobs, "2026-07-23");
+const publicChannels = buildPublicChannels(publicJobs, "2026-07-24");
 const publicIds = new Set(publicJobs.map((job) => job.id));
 const expectedPublicIds = new Set(
   curated
@@ -91,7 +91,7 @@ for (const channel of publicChannels) {
 
 execFileSync(process.execPath, ["scripts/build-site.js"], {
   cwd: ROOT,
-  env: { ...process.env, POOL_AS_OF_DATE: "2026-07-23" },
+  env: { ...process.env, POOL_AS_OF_DATE: "2026-07-24" },
   stdio: "pipe",
 });
 
@@ -118,7 +118,7 @@ assert.deepEqual(builtIssues, publicIssues);
 assert.deepEqual(builtChannels, publicChannels);
 
 const todayIds = new Set(
-  builtIssues.filter((issue) => issue.date === "2026-07-23").flatMap((issue) => issue.job_ids)
+  builtIssues.filter((issue) => issue.date === "2026-07-24").flatMap((issue) => issue.job_ids)
 );
 const home = fs.readFileSync(path.join(ROOT, "dist", "index.html"), "utf8");
 const todaySection = home.split('id="today-jobs"')[1].split('aria-labelledby="channels-title"')[0];
@@ -129,12 +129,12 @@ assert.deepEqual(renderedTodayIds, todayIds);
 
 execFileSync(process.execPath, ["scripts/build-site.js"], {
   cwd: ROOT,
-  env: { ...process.env, POOL_AS_OF_DATE: "2026-07-24" },
+  env: { ...process.env, POOL_AS_OF_DATE: "2026-07-25" },
   stdio: "pipe",
 });
 const nextDayHome = fs.readFileSync(path.join(ROOT, "dist", "index.html"), "utf8");
 const nextDaySection = nextDayHome.split('id="today-jobs"')[1].split('aria-labelledby="channels-title"')[0];
-assert.match(nextDaySection, /最新更新 <small>2026-07-23<\/small>/);
+assert.match(nextDaySection, /最新更新 <small>2026-07-24<\/small>/);
 assert.deepEqual(
   new Set(Array.from(nextDaySection.matchAll(/data-job-id="(j_[a-f0-9]{12})"/g), (match) => match[1])),
   todayIds
