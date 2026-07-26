@@ -428,11 +428,15 @@ function readRecruiting(filePath = RECRUITING_FILE) {
   if (!Array.isArray(items)) throw new Error("data/recruiting.json must contain an array.");
   return items.map((item, index) => {
     const label = `data/recruiting.json item ${index + 1}`;
-    if (!item.title || !item.organization || !item.summary || !item.url) {
-      throw new Error(`${label} requires title, organization, summary, and url.`);
+    const required = ["title", "organization", "channel", "depositRequired", "intermediary", "requirements", "workContent", "compensationAndWorkMode", "notes", "url"];
+    if (required.some((field) => !String(item[field] || "").trim())) {
+      throw new Error(`${label} is missing a required field.`);
     }
     const url = new URL(item.url);
     if (!["http:", "https:"].includes(url.protocol)) throw new Error(`${label} url must use http or https.`);
+    if (item.image && (!/^\/assets\/[a-zA-Z0-9._-]+$/.test(item.image) || !item.imageAlt || !Number.isInteger(item.imageWidth) || !Number.isInteger(item.imageHeight))) {
+      throw new Error(`${label} image requires a safe asset path, alt text, width, and height.`);
+    }
     return { ...item, url: url.href };
   });
 }
@@ -971,16 +975,25 @@ function renderRecruiting(items) {
       <div class="job-section-title">
         <div><span class="opportunity-status">${escapeHtml(item.status || "开放中")}</span>${item.promoted ? '<span class="promotion-badge">推广链接</span>' : ""}</div>
         <h2>${escapeHtml(item.title)}</h2>
-        <p>${escapeHtml(item.organization)}</p>
+        <p class="job-company-line"><span class="job-company-label">平台/公司</span><span class="job-company-value">${escapeHtml(item.organization)}</span></p>
       </div>
     </div>
-    <p class="opportunity-summary">${escapeHtml(item.summary)}</p>
-    ${item.format || item.deadline ? `<dl class="job-judgement-grid">
-      ${renderDetailRow("形式", item.format)}
-      ${renderDetailRow("有效期", item.deadline)}
-    </dl>` : ""}
-    ${item.fit ? `<dl class="job-detail-stack">${renderDetailRow("适合谁", item.fit)}</dl>` : ""}
-    <a class="job-apply-link opportunity-link" href="${escapeHtml(item.url)}" rel="noopener noreferrer${item.promoted ? " sponsored" : ""}" target="_blank">查看招募详情 <span aria-hidden="true">↗</span></a>
+    ${item.image ? `<figure class="opportunity-media">
+      <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.imageAlt)}" width="${item.imageWidth}" height="${item.imageHeight}" loading="lazy">
+      <figcaption>相关招募信息截图</figcaption>
+    </figure>` : ""}
+    <dl class="job-summary-grid" aria-label="招募速览">
+      ${renderSummaryItem("渠道", item.channel)}
+      ${renderSummaryItem("是否交保证金", item.depositRequired)}
+      ${renderSummaryItem("是否中介", item.intermediary)}
+      ${renderSummaryItem("报酬与工作方式", item.compensationAndWorkMode)}
+    </dl>
+    <dl class="job-detail-stack" aria-label="招募详情">
+      ${renderDetailRow("申请门槛", item.requirements)}
+      ${renderDetailRow("工作内容", item.workContent)}
+      ${renderDetailRow("注意事项", item.notes)}
+    </dl>
+    <a class="job-apply-link opportunity-link" href="${escapeHtml(item.url)}" rel="noopener noreferrer${item.promoted ? " sponsored" : ""}" target="_blank">平台注册链接 <span aria-hidden="true">↗</span></a>
   </article>`
     )
     .join("\n");
@@ -1229,18 +1242,23 @@ function renderSurveyAdmin() {
   });
 }
 
-function copyAssets() {
+function copyAssets(recruiting = []) {
   ensureDir(path.join(DIST_DIR, "assets"));
   fs.copyFileSync(path.join(SITE_DIR, "styles.css"), path.join(DIST_DIR, "assets", "styles.css"));
   fs.copyFileSync(path.join(SITE_DIR, "archive.js"), path.join(DIST_DIR, "assets", "archive.js"));
   fs.copyFileSync(path.join(SITE_DIR, "survey.js"), path.join(DIST_DIR, "assets", "survey.js"));
   fs.copyFileSync(path.join(SITE_DIR, "survey-admin.js"), path.join(DIST_DIR, "assets", "survey-admin.js"));
   fs.copyFileSync(path.join(SITE_DIR, "wechat_qr.jpg"), path.join(DIST_DIR, "assets", "wechat_qr.jpg"));
+  for (const image of new Set(recruiting.map((item) => item.image).filter(Boolean))) {
+    const fileName = path.basename(image);
+    fs.copyFileSync(path.join(SITE_DIR, fileName), path.join(DIST_DIR, "assets", fileName));
+  }
 }
 
 function main() {
+  const recruiting = readRecruiting();
   emptyDir(DIST_DIR);
-  copyAssets();
+  copyAssets(recruiting);
 
   const picks = getPickFiles().map(readPick);
   const asOfDate = poolAsOfDate();
@@ -1252,7 +1270,6 @@ function main() {
   const poolJobs = buildPublicJobs(curatedJobs, issues);
   const publicIssues = buildPublicIssues(issues, poolJobs);
   const publicChannels = buildPublicChannels(poolJobs, asOfDate);
-  const recruiting = readRecruiting();
   writePage("index.html", renderIndex(picks, poolJobs, publicIssues, publicChannels, asOfDate));
   writePage(path.join("about", "index.html"), renderAbout(readAboutPage()));
   writePage(path.join("pool", "index.html"), renderPool(asOfDate));

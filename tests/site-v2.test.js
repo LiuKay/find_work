@@ -57,20 +57,31 @@ for (const [channelId, payload] of Object.entries(surveyCases)) {
   assert.ok(recommendSurveyChannels(payload).includes(channelId), `survey mapping missing ${channelId}`);
 }
 assert.ok(publicJobs.length > 0);
-const recruitingPreview = renderRecruiting([
-  {
-    title: "Example <script>",
-    organization: "Example",
-    summary: "A test opportunity",
-    url: "https://example.com/ref",
-    promoted: true,
-  },
-]);
+const recruitingItem = {
+  title: "Example <script>",
+  organization: "Example",
+  channel: "Expert platform",
+  depositRequired: "否",
+  intermediary: "否",
+  requirements: "Three years",
+  workContent: "Evaluation",
+  compensationAndWorkMode: "Remote",
+  notes: "Verify terms",
+  image: "/assets/example.png",
+  imageAlt: "Example screenshot",
+  imageWidth: 1200,
+  imageHeight: 600,
+  url: "https://example.com/ref",
+  promoted: true,
+};
+const recruitingPreview = renderRecruiting([recruitingItem]);
 assert.match(recruitingPreview, /推广链接/);
 assert.match(recruitingPreview, /rel="noopener noreferrer sponsored"/);
+assert.match(recruitingPreview, /<img[^>]+width="1200"[^>]+height="600"/);
+assert.match(recruitingPreview, /是否交保证金/);
 assert.doesNotMatch(recruitingPreview, /Example <script>/);
 const invalidRecruitingFile = path.join(require("os").tmpdir(), `find-work-recruiting-${process.pid}.json`);
-fs.writeFileSync(invalidRecruitingFile, '[{"title":"x","organization":"x","summary":"x","url":"javascript:alert(1)"}]');
+fs.writeFileSync(invalidRecruitingFile, JSON.stringify([{ ...recruitingItem, url: "javascript:alert(1)" }]));
 assert.throws(() => readRecruiting(invalidRecruitingFile), /url must use http or https/);
 fs.unlinkSync(invalidRecruitingFile);
 assert.deepEqual(publicIds, expectedPublicIds);
@@ -117,6 +128,7 @@ for (const file of [
   "index.html",
   "pool/index.html",
   "recruiting/index.html",
+  "assets/recruiting-originwise.png",
   "assets/jobs.json",
   "assets/issues.json",
   "assets/channels.json",
@@ -165,4 +177,6 @@ const publicAssets = [
   fs.readFileSync(path.join(ROOT, "dist", "assets", "channels.json"), "utf8"),
 ].join("\n");
 assert.doesNotMatch(publicAssets, /candidate_id|pipeline_status|screen_reason|"reviewer"/);
+const siteStyles = fs.readFileSync(path.join(ROOT, "site", "styles.css"), "utf8");
+assert.doesNotMatch(siteStyles, /\.archive-layout h1\s*\{[^}]*max-width:\s*1[02]ch/s);
 console.log("site v2 self-check passed");
