@@ -16,7 +16,7 @@ from typing import Iterable
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-from job_identity import normalize_url, stable_job_id  # noqa: E402
+from job_identity import normalize_text, normalize_url, stable_job_id  # noqa: E402
 
 DEFAULT_ROOT = Path("/Users/kaybee/Documents/github/find_work/job-picks")
 HEADER = ["date", "title", "company", "url", "job_direction", "source", "job_id"]

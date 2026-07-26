@@ -385,6 +385,27 @@ class CuratedJobsTests(unittest.TestCase):
             self.assertTrue(seen_lines[1].endswith(f"\t{expected}"))
             self.assertTrue(bad_lines[1].endswith(f"\t{expected}"))
 
+            for script in ("seen_jobs.py", "bad_links.py"):
+                checked = subprocess.run(
+                    [
+                        sys.executable,
+                        str(ROOT / ".agents/skills/daily-job-picks/scripts" / script),
+                        "--root",
+                        str(root),
+                        "check",
+                        "--title",
+                        "Support",
+                        "--company",
+                        "Example",
+                        "--url",
+                        url,
+                    ],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertEqual(checked.returncode, 1, checked.stdout + checked.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

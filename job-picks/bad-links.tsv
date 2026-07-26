@@ -231,3 +231,7 @@ date	url	title	company	reason	replacement_url	job_id
 2026-07-23	https://jobs.ashbyhq.com/bjakcareer/37bf1f7f-79fc-4538-93f2-eae64459a72e	Product Owner – China (Remote)	Bjak	link_check 未识别岗位标题与公司，按硬规则剔除		j_8dd673c54a45
 2026-07-23	https://boards.greenhouse.io/embed/job_app?for=5ca&token=4023140101	English Gaming Support Agent - APAC	5CA	HTTP 404，岗位页已失效		j_e2478531f164
 2026-07-23	https://job-boards.greenhouse.io/workstream/jobs/5156961004	AI Engineer	Workstream	跳转至通用职位列表错误页，无法打开具体岗位		j_ba1e008b8711
+2026-07-26	https://job-boards.greenhouse.io/workstream/jobs/5341636004	研发实习生	Workstream	direct job URL redirects to company jobs list during finalist review		j_27bfcce8e868
+2026-07-26	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/5722533004	Clinical Research Associate	Precision Medicine Group	direct job URL redirects to company jobs list during finalist review		j_3156f3129967
+2026-07-26	https://jobs.smartrecruiters.com/NielsenIQ/744000130754871-senior-data-operations-analyst	Senior Data Operations Analyst	NielsenIQ	finalist page contains an expired-job marker		j_40e379f72414
+2026-07-26	https://jobs.ashbyhq.com/paymentology/0bdc1e66-0fce-4114-8cf3-2cb1aef63bd4	Account Manager (Remote - APAC)	Paymentology	public job page does not expose matching title and company details		j_e6dcebb1e6cf
