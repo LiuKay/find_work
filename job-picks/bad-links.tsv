@@ -235,3 +235,5 @@ date	url	title	company	reason	replacement_url	job_id
 2026-07-26	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/5722533004	Clinical Research Associate	Precision Medicine Group	direct job URL redirects to company jobs list during finalist review		j_3156f3129967
 2026-07-26	https://jobs.smartrecruiters.com/NielsenIQ/744000130754871-senior-data-operations-analyst	Senior Data Operations Analyst	NielsenIQ	finalist page contains an expired-job marker		j_40e379f72414
 2026-07-26	https://jobs.ashbyhq.com/paymentology/0bdc1e66-0fce-4114-8cf3-2cb1aef63bd4	Account Manager (Remote - APAC)	Paymentology	public job page does not expose matching title and company details		j_e6dcebb1e6cf
+2026-07-27	https://jobs.workable.com/view/6outMdfegmNm9mzUNeVTWS/remote-digital-marketing-specialist-in-taiwan-at-law-offices-of-sabrina-li	Digital Marketing Specialist	Law Offices of Sabrina Li	job detail page returns HTTP 410		j_2d6684e7e694
+2026-07-27	https://jobs.ashbyhq.com/bjakcareer/50480d74-5e0d-4ec8-883c-5e30c6c3e544	QA Automation Engineer - AI Workflow Systems (Remote, China)	BJAK	public page does not expose matching job title or company details		j_49125ac3f1c7
