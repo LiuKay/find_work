@@ -243,3 +243,17 @@ date	url	title	company	reason	replacement_url	job_id
 2026-07-28	https://jobs.smartrecruiters.com/GriffithUniversity/744000009768795-academic-english-teacher-china	Academic English Teacher - China	Griffith University	finalist page contains an expired-job marker		j_cfd41c340e8c
 2026-07-28	https://jobs.smartrecruiters.com/BoschGroup/744000126644110-software-engineer-etas	Software Engineer_ETAS	Bosch Group	finalist page contains an expired-job marker		j_7da48b9a7117
 2026-07-28	https://jobs.smartrecruiters.com/BoschGroup/744000069245086-product-engineering-development-engineer-bst	Product Engineering Development Engineer_BST	Bosch Group	finalist page contains an expired-job marker		j_37a74264bd8b
+2026-07-29	https://gensler.wd1.myworkdayjobs.com/en-US/genslercareers/job/Shanghai-China/Marketing-Specialist_R-17963	Marketing Specialist	Gensler	public page does not expose matching job title or company details		j_fa360eece620
+2026-07-29	https://iqvia.wd1.myworkdayjobs.com/en-US/IQVIA/job/Marketing-Specialist_R1537708	Marketing Specialist (Contractor)	IQVIA	public page does not expose matching job title or company details		j_964c9fc174af
+2026-07-29	https://jobs.smartrecruiters.com/NielsenIQ/744000118536559-senior-data-scientist	Senior Data Scientist	NielsenIQ	finalist page contains an expired-job marker		j_693ae9488564
+2026-07-29	https://jobs.smartrecruiters.com/Versant3/744000117583227-affiliate-sales-intern	Affiliate Sales Intern	VERSANT Media	finalist page contains an expired-job marker		j_8312a6c5f0ff
+2026-07-29	https://jobs.smartrecruiters.com/AveryDennison/744000115808468-procurement-lead	Procurement Lead	Avery Dennison	finalist page contains an expired-job marker		j_7301e4a8a3ba
+2026-07-29	https://www.mongodb.com/careers/jobs/7174996	Senior Solutions Architect	MongoDB	public page does not expose matching company details		j_d40313758a8e
+2026-07-29	https://jobs.smartrecruiters.com/QIMA/744000123738426-continuous-improvement-engineer-internship	Continuous Improvement Engineer Internship	QIMA	finalist page contains an expired-job marker		j_5a42d8842f00
+2026-07-29	https://jobs.smartrecruiters.com/NielsenIQ/744000126018007-market-hr-partner-china	Market HR Partner - China	NielsenIQ	finalist page contains an expired-job marker		j_b8749b40e9bb
+2026-07-29	https://jobs.lever.co/yuno/3cce9539-5a10-4b70-ac86-ef4d16a5f3aa	Technical Account Manager	Yuno	job detail page returns HTTP 404		j_8bcaf0a5aeca
+2026-07-29	https://jobs.ashbyhq.com/Lime/bffe0122-4e2c-433f-ab13-6e157eb445e0	Senior Quality Engineer	Lime	public page does not expose matching job title or company details		j_37be89d1b941
+2026-07-29	https://jobs.ashbyhq.com/bjakcareer/4bcceeeb-b7fd-4b6d-a72f-5eab6349d75a	Backend Software Engineer - AI Operations Systems (Remote, China)	BJAK	public page does not expose matching job title or company details		j_035ef96c1ecf
+2026-07-29	https://job-boards.greenhouse.io/whatnot/jobs/5501922004	Senior Frontend Engineer - China	Whatnot	job detail page returns HTTP 404		j_1256b13d9925
+2026-07-29	https://job-boards.greenhouse.io/fanaticscollectibles/jobs/4210010009	Strategy & Business Operations Associate, APAC	Fanatics Collectibles	direct job URL redirects to company careers landing page		j_fd967411d857
+2026-07-29	https://job-boards.greenhouse.io/speechify/jobs/5975937004	Tech Lead, Web Core Product & Chrome Extension - Shanghai, China	Speechify	direct job URL redirects to company careers landing page		j_5afc43bba6e0
