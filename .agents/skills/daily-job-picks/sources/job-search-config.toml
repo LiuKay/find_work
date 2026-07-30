@@ -90,6 +90,18 @@ search_templates = [
 ]
 
 [[source_groups]]
+name = "Remote China"
+enabled = true
+trust_level = "B"
+source_type = "remote_board"
+avoid_as_final_link = false
+search_templates = [
+  'site:remote-china.com/jobs "{role}"',
+  'site:remote-china.com/jobs "{role}" "远程"',
+  'site:remote-china.com/jobs "{role}" "兼职"'
+]
+
+[[source_groups]]
 name = "LinkedIn and gated discovery"
 enabled = true
 trust_level = "C"
