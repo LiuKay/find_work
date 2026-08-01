@@ -267,3 +267,15 @@ date	url	title	company	reason	replacement_url	job_id
 2026-07-31	https://job-boards.greenhouse.io/speechify/jobs/5974621004	Senior Software Engineer, Core Experiences	Speechify	HTTP 503; unavailable to normal reader		j_ef6382bda478
 2026-07-31	https://jobs.smartrecruiters.com/InformaGroupPlc/744000081517620-sales-executive-	Sales Executive	Informa	page shows different role: Key Account Manager - WOCA		j_2e509731450f
 2026-07-31	https://jobs.workable.com/view/5yy8kABDDeJ1rriCDzTJvz/hybrid-associate-advisor---research-operations-in-shanghai-at-euromonitor	Associate Advisor - Research Operations	Euromonitor	HTTP 410		j_626412cd8eec
+2026-08-01	https://jobs.smartrecruiters.com/NielsenIQ/744000124877589-market-hr-partner-china	Market HR Partner, China	NielsenIQ	job has expired		j_86822cd39480
+2026-08-01	https://jobs.smartrecruiters.com/Averna1/744000126919529-avionics-test-bench-system-engineer	Avionics Test Bench System Engineer	Averna	job has expired		j_cb9d39e39851
+2026-08-01	https://jobs.smartrecruiters.com/Canva/6000000000753503-operations-business-partner?trid=7d1dcdfa-96a8-4e55-bb9c-0db211f5a9b3	Operations Business Partner	Canva	job has expired		j_187f9975d894
+2026-08-01	https://jobs.smartrecruiters.com/MinorInternational/744000114883274-telemarketing-consultant	Telemarketing Consultant	Minor International	job has expired		j_f58701f2f93b
+2026-08-01	https://jobs.smartrecruiters.com/MattelInc/744000121930948-talent-acquisition-partner	Talent Acquisition Partner	Mattel	job has expired		j_e2572e845f7e
+2026-08-01	https://jobs.ashbyhq.com/tenjin/8a681b38-89c6-45af-bfb4-70adec32e894	Customer Success Manager	Tenjin	page did not expose selected role details to link checker		j_81df76161c84
+2026-08-01	https://roche.wd3.myworkdayjobs.com/en-US/roche-ext/job/Data-Engineer-Intern-CET_202607-117521-1	Data Engineer Intern-CET	Roche	page did not expose selected role details to link checker		j_a489f5a9289b
+2026-08-01	https://jobs.apple.com/en-us/details/200661762-3715/business-data-analyst?team=CORSV	Business Data Analyst	Apple	bad-page marker detected		j_7d09e64caa9b
+2026-08-01	https://jobs.apple.com/en-sa/details/200668562-3715/project-product-manager-apo-bpr?team=OPMFG	Project/Product Manager - APO BPR	Apple	bad-page marker detected		j_696aece03127
+2026-08-01	https://job-boards.greenhouse.io/onrunning/jobs/7830494	Senior Specialist - Data Engineer	On	HTTP 302 without usable final job page		j_3d0b9e29c76b
+2026-08-01	https://borgwarner.wd5.myworkdayjobs.com/en-US/BorgWarner_Careers/job/Shanghai---China/Business-Data-Analyst_R2026-1663-1	Business Data Analyst	BorgWarner	page did not expose selected role details to link checker		j_5c434fda928f
+2026-08-01	https://dyson.wd3.myworkdayjobs.com/en-US/dyson_careers/job/Operations-Project-Manager_JR36479	Operations Project Manager	Dyson	page did not expose selected role details to link checker		j_aeae1de834f8
