@@ -165,10 +165,14 @@ execFileSync(process.execPath, ["scripts/build-site.js"], {
 });
 const nextDayHome = fs.readFileSync(path.join(ROOT, "dist", "index.html"), "utf8");
 const nextDaySection = nextDayHome.split('id="today-jobs"')[1].split('aria-labelledby="channels-title"')[0];
-assert.match(nextDaySection, /最新更新 <small>2026-08-05<\/small>/);
+const nextDayLatestDate = publicIssues.find((issue) => issue.date <= "2026-08-06").date;
+const nextDayIds = new Set(
+  publicIssues.filter((issue) => issue.date === nextDayLatestDate).flatMap((issue) => issue.job_ids)
+);
+assert.match(nextDaySection, new RegExp(`最新更新 <small>${nextDayLatestDate}<\\/small>`));
 assert.deepEqual(
   new Set(Array.from(nextDaySection.matchAll(/data-job-id="(j_[a-f0-9]{12})"/g), (match) => match[1])),
-  todayIds
+  nextDayIds
 );
 
 const publicAssets = [

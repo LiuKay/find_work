@@ -824,11 +824,12 @@ function renderPickPage(pick) {
 }
 
 function renderIndex(picks, poolJobs, publicIssues, channels, asOfDate) {
-  const latest = picks[0];
+  const visibleIssues = publicIssues.filter((issue) => issue.date <= asOfDate);
+  const latest = picks.find((pick) => pick.date <= asOfDate);
   const latestSummary = latestIssueSummary(latest ? extractJobs(latest) : []);
-  const latestUpdateDate = publicIssues[0]?.date || asOfDate;
+  const latestUpdateDate = visibleIssues[0]?.date || asOfDate;
   const todayIds = new Set(
-    publicIssues.filter((issue) => issue.date === latestUpdateDate).flatMap((issue) => issue.job_ids)
+    visibleIssues.filter((issue) => issue.date === latestUpdateDate).flatMap((issue) => issue.job_ids)
   );
   const todayJobs = poolJobs.filter((job) => todayIds.has(job.id));
   const byDirection = new Map();
@@ -862,7 +863,7 @@ function renderIndex(picks, poolJobs, publicIssues, channels, asOfDate) {
       </a>`
     )
     .join("");
-  const recentIssues = publicIssues
+  const recentIssues = visibleIssues
     .slice(0, 5)
     .map(
       (issue) => `<li>
