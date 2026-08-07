@@ -333,3 +333,4 @@ date	url	title	company	reason	replacement_url	job_id
 2026-08-06	https://job-boards.greenhouse.io/remotecom/jobs/7779690003	Manager, Lifecycle - Time & Attendance (APAC)	Remote	redirects to company job-board landing page		j_76194316a1c8
 2026-08-06	https://job-boards.greenhouse.io/canonical/jobs/7911757	Embedded Devices Software Solution Sales Manager - APAC	Canonical	captcha marker on finalist verification		j_56ddc6ba4b38
 2026-08-06	https://jobs.workable.com/view/uQFhZ4KatzMZZiUktyhmYP/remote-regional-vp-of-sales--apac-in-sydney-at-genetec	Regional VP of Sales - APAC	Genetec	HTTP 410 on finalist verification		j_d29234dd8cf3
+2026-08-07	https://job-boards.greenhouse.io/remotecom/jobs/7814926003	Senior Lifecycle Specialist, Employee Relations and Transitions - APAC	Remote	最终核验触发 captcha 标记，未作为日报直达链接		j_2bab604572e8
