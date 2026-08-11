@@ -348,3 +348,8 @@ date	url	title	company	reason	replacement_url	job_id
 2026-08-09	https://job-boards.greenhouse.io/remotecom/jobs/7804056003	Mobility Specialist - APAC	Remote	link_check ok_basic false: captcha marker		j_d041a15580e6
 2026-08-10	https://jobs.workable.com/view/3njgWTxRgE3FVENsX4zKgE/english-esl-teacher-in-zhuhai-at-elevate	English ESL Teacher	Elevate	HTTP 410		j_c6512bc27dfc
 2026-08-10	https://jobs.workable.com/view/4FnjKSbxXBbB7qadgS6TbD/contract-manager-in-shanghai-at-envalior	Contract Manager	Envalior	HTTP 410		j_58e5e47bd567
+2026-08-11	https://booqable.com/careers/customer-support	Customer Support	Booqable	最终链接检查命中无效页面标记		j_add6cd131c26
+2026-08-11	https://jobs.ashbyhq.com/clipboard/2d4a6478-ea39-4e5e-bb0c-dc7d7b14d220	Central WFM - RTA Team Lead	Clipboard Health	无法确认岗位标题和公司信息		j_05b5532a3767
+2026-08-11	https://jobs.ashbyhq.com/bjakcareer/844ba19a-fe2b-49d2-b3f7-e814cf0888bb	Full Stack Developer	BJAK	无法确认岗位标题和公司信息		j_34b00efc18f2
+2026-08-11	https://jobs.ashbyhq.com/atria/1fb6bf71-0b30-416a-b3b5-e273bf4ba7c0	AI Agent Engineer	Atria	无法确认岗位标题和公司信息		j_faee769796e7
+2026-08-11	https://job-boards.greenhouse.io/pfm/jobs/5799873004	Senior Clinical Research Associate	Precision for Medicine	原岗位已下线并跳转至职位列表		j_337fc6926f66
