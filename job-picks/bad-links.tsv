@@ -353,3 +353,12 @@ date	url	title	company	reason	replacement_url	job_id
 2026-08-11	https://jobs.ashbyhq.com/bjakcareer/844ba19a-fe2b-49d2-b3f7-e814cf0888bb	Full Stack Developer	BJAK	无法确认岗位标题和公司信息		j_34b00efc18f2
 2026-08-11	https://jobs.ashbyhq.com/atria/1fb6bf71-0b30-416a-b3b5-e273bf4ba7c0	AI Agent Engineer	Atria	无法确认岗位标题和公司信息		j_faee769796e7
 2026-08-11	https://job-boards.greenhouse.io/pfm/jobs/5799873004	Senior Clinical Research Associate	Precision for Medicine	原岗位已下线并跳转至职位列表		j_337fc6926f66
+2026-08-12	https://automattic.com/work-with-us/job/applied-ai-engineer	Applied AI Engineer	Automattic	直达页跳转至公司职位总页，无法继续申请该具体岗位		j_7cbcbb39afd4
+2026-08-12	https://careers.airbnb.com/positions/7945163	Software Engineer, Community Support Engineering	Airbnb	岗位直达页返回 HTTP 404		j_3b7c3cd08262
+2026-08-12	https://careers.airbnb.com/positions/7546721	Frontend Engineer, Payments	Airbnb	岗位直达页返回 HTTP 404		j_8f42ec6f53c0
+2026-08-12	https://jobs.lever.co/bjak/3478c846-e9be-40d8-9db8-746fe0067d59	Business Operations Associate	BJAK	岗位直达页返回 HTTP 404		j_41d09be25baf
+2026-08-12	https://jobs.ashbyhq.com/lemfi/17e7ed34-6d79-4e64-8593-657ef0542b6f	Regional Performance Marketing Manager - China	LemFi	公开直达页未展示岗位标题与公司详情		j_1fa6fb2ab3fc
+2026-08-12	https://jobs.ashbyhq.com/heron-power/03f080e5-659c-4f23-8ad3-77b7bb5d5526	Supplier Industrialization Engineering Manager - China	Heron Power	公开直达页未展示岗位标题与公司详情		j_fdab46eb454d
+2026-08-12	https://apply.workable.com/passionio/j/B89DB32A0F	Customer Success Manager (Global Remote | SaaS)	Passion.io	岗位页跳转到职位总页		j_2000f91ba1ea
+2026-08-12	https://apply.workable.com/cloudlinux-1/j/D2A76A1A60	Server Backend Developer (Go + Python) for Imunify360 (work anywhere, remote)	CloudLinux	岗位页跳转到职位总页		j_a0c715883c69
+2026-08-12	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/6016951004	Clinical Trial Manager (Shanghai/Beijing)	Precision Medicine Group	岗位页跳转到职位总页		j_5ed8adbf10b8
