@@ -362,3 +362,12 @@ date	url	title	company	reason	replacement_url	job_id
 2026-08-12	https://apply.workable.com/passionio/j/B89DB32A0F	Customer Success Manager (Global Remote | SaaS)	Passion.io	岗位页跳转到职位总页		j_2000f91ba1ea
 2026-08-12	https://apply.workable.com/cloudlinux-1/j/D2A76A1A60	Server Backend Developer (Go + Python) for Imunify360 (work anywhere, remote)	CloudLinux	岗位页跳转到职位总页		j_a0c715883c69
 2026-08-12	https://job-boards.greenhouse.io/precisionmedicinegroup/jobs/6016951004	Clinical Trial Manager (Shanghai/Beijing)	Precision Medicine Group	岗位页跳转到职位总页		j_5ed8adbf10b8
+2026-08-14	https://jobs.ashbyhq.com/bjakcareer/6964b897-0b6b-42bd-813d-578c1639b8bd	Executive, Office of the CEO (China)	BJAK	公开页面未展示具体岗位标题与公司		j_292607d9d32a
+2026-08-14	https://jobs.ashbyhq.com/bjakcareer/b1db7402-cbc0-42cc-8131-92ab857c194f	Recruitment Admin	BJAK	公开页面未展示具体岗位标题与公司		j_509227518f11
+2026-08-14	https://jobs.ashbyhq.com/myTomorrows/f3904413-8574-4fc4-a522-2d23fc87dd2e	Patient Navigator	myTomorrows	公开页面未展示具体岗位标题与公司		j_1b71baa5da82
+2026-08-14	https://jobs.ashbyhq.com/lilt-production/1a2402d6-afd7-48c6-b7de-71350a04ccda	Freelance Multimedia Localization Specialist - Remote	LILT	公开页面未展示具体岗位标题与公司		j_10d30e4f402a
+2026-08-14	https://jobs.smartrecruiters.com/InterIKEAGroup/744000119769127-tax-treasury-intern	Tax & Treasury Intern	Inter IKEA Group	页面明确显示岗位已过期		j_dc125da8a2c0
+2026-08-14	https://jobs.smartrecruiters.com/InformaGroupPlc/744000128426679-sales-manager-fashion-leather	Sales Manager, Fashion/Leather	Informa Group	页面标题不匹配且岗位已过期		j_4d1337cce7e1
+2026-08-14	https://jobs.workable.com/view/97awPVbaeVsurrXNMqRFD6/art-teacher-in-shanghai-at-elevate	Art Teacher	Elevate	HTTP 410，岗位页已不可访问		j_c889308b4706
+2026-08-14	https://jobs.workable.com/view/2oL1HiSZUc42nZxVteTDos/english-teacher-in-beijing-at-elevate	English Teacher	Elevate	HTTP 410，岗位页已不可访问		j_231120def788
+2026-08-14	https://careers.celestica.com/job/Shanghai-Manager%2C-Strategic-Supply-Chain-SH/1407388133	Manager, Strategic Supply Chain	Celestica	页面明确显示岗位已招满		j_2c1ac3c310f8
