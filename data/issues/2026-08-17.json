@@ -1,0 +1,43 @@
+{
+  "date": "2026-08-17",
+  "issue_id": "2026-08-17",
+  "job_ids": [
+    "j_913ec3bc0f9f",
+    "j_bece36964e85",
+    "j_fa4d3ad60bb3",
+    "j_04e7b516b01d",
+    "j_ba4c56ea4ef7",
+    "j_072d65b67c6b",
+    "j_d6319f2c52e0",
+    "j_a1c9cc336b20",
+    "j_21475ddea0bd",
+    "j_cec9c8a2767f",
+    "j_cf235ed5f082",
+    "j_a7cf45b049c9",
+    "j_57a0d4e4f60c",
+    "j_c66a2fe582ff",
+    "j_3dbd4814a0b1",
+    "j_bfef42abb419",
+    "j_d374eeab5baa",
+    "j_a10379da36a7",
+    "j_fe72cd6e7d01",
+    "j_b0b289b962f1"
+  ],
+  "mode": "public",
+  "stats": {
+    "count": 20,
+    "directions": [
+      "产品",
+      "供应链",
+      "其他",
+      "内容",
+      "客户成功",
+      "技术",
+      "运营",
+      "销售",
+      "销售支持",
+      "项目管理"
+    ]
+  },
+  "title": "2026-08-17 外企/海外远程岗位精选"
+}
