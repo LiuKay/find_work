@@ -111,6 +111,14 @@ function markdownToHtml(markdown) {
       continue;
     }
 
+    const linkedImage = /^\[!\[([^\]]*)\]\((\/[^)\s]+)\)\]\((https?:\/\/[^)\s]+)\)$/.exec(line.trim());
+    if (linkedImage) {
+      closeParagraph();
+      closeList();
+      html.push(`<figure class="markdown-image markdown-image-wide"><a href="${escapeHtml(linkedImage[3])}" rel="noopener noreferrer" target="_blank"><img src="${escapeHtml(linkedImage[2])}" alt="${escapeHtml(linkedImage[1])}" loading="lazy"></a></figure>`);
+      continue;
+    }
+
     const image = /^!\[([^\]]*)\]\((\/[^)\s]+)\)$/.exec(line.trim());
     if (image) {
       closeParagraph();
@@ -1250,6 +1258,8 @@ function copyAssets(recruiting = []) {
   fs.copyFileSync(path.join(SITE_DIR, "survey.js"), path.join(DIST_DIR, "assets", "survey.js"));
   fs.copyFileSync(path.join(SITE_DIR, "survey-admin.js"), path.join(DIST_DIR, "assets", "survey-admin.js"));
   fs.copyFileSync(path.join(SITE_DIR, "wechat_qr.jpg"), path.join(DIST_DIR, "assets", "wechat_qr.jpg"));
+  fs.copyFileSync(path.join(SITE_DIR, "xiaohongshu_qr.jpg"), path.join(DIST_DIR, "assets", "xiaohongshu_qr.jpg"));
+  fs.copyFileSync(path.join(SITE_DIR, "xiaohongshu_standard.jpg"), path.join(DIST_DIR, "assets", "xiaohongshu_standard.jpg"));
   for (const image of new Set(recruiting.map((item) => item.image).filter(Boolean))) {
     const fileName = path.basename(image);
     fs.copyFileSync(path.join(SITE_DIR, fileName), path.join(DIST_DIR, "assets", fileName));

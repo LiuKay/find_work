@@ -1150,7 +1150,9 @@ time {
 }
 
 .markdown-image {
-  margin: 18px 0 16px;
+  display: inline-block;
+  margin: 18px 16px 16px 0;
+  vertical-align: top;
 }
 
 .markdown-image img {
@@ -1161,6 +1163,15 @@ time {
   background: var(--paper);
   border-radius: var(--radius-md);
   box-shadow: inset 0 0 0 1px rgba(77, 64, 43, 0.1), 0 8px 22px rgba(45, 35, 20, 0.1);
+}
+
+.markdown-image-wide {
+  display: block;
+  margin: 18px 0 16px;
+}
+
+.markdown-image-wide img {
+  width: min(360px, 100%);
 }
 
 .archive-layout {
