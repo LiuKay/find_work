@@ -371,3 +371,5 @@ date	url	title	company	reason	replacement_url	job_id
 2026-08-14	https://jobs.workable.com/view/97awPVbaeVsurrXNMqRFD6/art-teacher-in-shanghai-at-elevate	Art Teacher	Elevate	HTTP 410，岗位页已不可访问		j_c889308b4706
 2026-08-14	https://jobs.workable.com/view/2oL1HiSZUc42nZxVteTDos/english-teacher-in-beijing-at-elevate	English Teacher	Elevate	HTTP 410，岗位页已不可访问		j_231120def788
 2026-08-14	https://careers.celestica.com/job/Shanghai-Manager%2C-Strategic-Supply-Chain-SH/1407388133	Manager, Strategic Supply Chain	Celestica	页面明确显示岗位已招满		j_2c1ac3c310f8
+2026-08-22	https://jobs.workable.com/view/qrwPC7Q5P9wdu3KDisGfFXQ3TD/quality-assurance-%28qa%29-engineer-%28ai-%26-insurance-core-systems%29-in-chengdu-at-igloo	Quality Assurance Engineer (AI & Insurance Core Systems)	Igloo	岗位页面返回 HTTP 410		j_4ec78c0cffc7
+2026-08-22	https://jobs.workable.com/view/5U3LJzLCknSkeMgfFXQ3TD/mes-functional-analyst-in-shenzhen-at-critical-manufacturing	MES Functional Analyst	Critical Manufacturing	岗位页面返回 HTTP 410		j_221c6a2a4080
