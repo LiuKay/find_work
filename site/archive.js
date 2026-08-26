@@ -9,6 +9,7 @@
   if (!form || !results || !count || !empty) return;
 
   let jobs = [];
+  let filterOptions = {};
   const forcedChannel = form.dataset.defaultChannel || "";
   const initialChannel = forcedChannel || new URLSearchParams(window.location.search).get("channel") || "";
   if (form.elements.channel) form.elements.channel.value = initialChannel;
@@ -112,10 +113,7 @@
   function populateOptions(field) {
     const select = form.querySelector(`[data-filter-options="${field}"]`);
     if (!select) return;
-    const jobField = field === "threshold" ? "applicationBarrier" : field === "confidence" ? "chinaApplicability" : field;
-    const values = Array.from(new Set(jobs.map((job) => job[jobField]).filter(Boolean))).sort((a, b) =>
-      a.localeCompare(b, "zh-CN")
-    );
+    const values = Array.isArray(filterOptions[field]) ? filterOptions[field] : [];
     select.insertAdjacentHTML(
       "beforeend",
       values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("")
@@ -176,13 +174,14 @@
     }
   }
 
-  fetch("/assets/jobs.json")
-    .then((response) => {
-      if (!response.ok) throw new Error("Unable to load jobs index");
-      return response.json();
+  Promise.all([fetch("/assets/jobs.json"), fetch("/assets/filter-options.json")])
+    .then(async ([jobsResponse, optionsResponse]) => {
+      if (!jobsResponse.ok || !optionsResponse.ok) throw new Error("Unable to load jobs index");
+      return [await jobsResponse.json(), await optionsResponse.json()];
     })
-    .then((data) => {
+    .then(([data, options]) => {
       jobs = Array.isArray(data) ? data : [];
+      filterOptions = options && typeof options === "object" ? options : {};
       const dates = jobs.map((job) => job.date).filter(Boolean).sort();
       const startDate = form.elements.startDate;
       const endDate = form.elements.endDate;

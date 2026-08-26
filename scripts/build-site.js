@@ -3,6 +3,7 @@ const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
 const CURATED_FILE = path.join(ROOT, "data", "curated", "jobs.ndjson");
+const TAXONOMY_FILE = path.join(ROOT, "data", "schema", "job-taxonomy.json");
 const ISSUES_DIR = path.join(ROOT, "data", "issues");
 const RECRUITING_FILE = path.join(ROOT, "data", "recruiting.json");
 const ABOUT_FILE = path.join(ROOT, "about.md");
@@ -11,6 +12,15 @@ const SITE_DIR = path.join(ROOT, "site");
 const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || "";
 const ASSET_VERSION = process.env.CF_PAGES_COMMIT_SHA || "local";
 const POOL_DAYS = 14;
+const TAXONOMY = JSON.parse(fs.readFileSync(TAXONOMY_FILE, "utf8"));
+const FILTER_FIELD_MAP = {
+  direction: "job_direction",
+  workMode: "work_mode",
+  experience: "experience",
+  language: "language",
+  threshold: "application_barrier",
+  confidence: "china_applicability",
+};
 const CHANNELS = [
   { id: "low-english", name: "低英文友好", description: "中文、双语或明确低英文门槛的岗位。" },
   { id: "ops-cs", name: "运营 / 客服 / 客户成功", description: "偏运营、客服与客户成功的岗位。" },
@@ -28,6 +38,22 @@ function emptyDir(dir) {
   fs.rmSync(dir, { recursive: true, force: true });
   ensureDir(dir);
 }
+
+function buildFilterOptions(taxonomy = TAXONOMY) {
+  const fields = taxonomy && taxonomy.fields;
+  if (!fields) throw new Error("Job taxonomy must contain fields.");
+  return Object.fromEntries(
+    Object.entries(FILTER_FIELD_MAP).map(([publicField, sourceField]) => {
+      const values = fields[sourceField] && fields[sourceField].values;
+      if (!Array.isArray(values) || !values.length || new Set(values).size !== values.length) {
+        throw new Error(`Job taxonomy field ${sourceField} must contain unique values.`);
+      }
+      return [publicField, values];
+    })
+  );
+}
+
+const FILTER_OPTIONS = buildFilterOptions();
 
 function escapeHtml(value) {
   return value
@@ -294,7 +320,13 @@ function validateActiveJobDetails(curatedJobs) {
   const idCounts = new Map();
   for (const job of activeJobs) idCounts.set(job.job_id, (idCounts.get(job.job_id) || 0) + 1);
   const duplicateIds = Array.from(idCounts.values()).filter((count) => count > 1).length;
-  if (!invalid.length && !duplicateIds) return;
+  const invalidTaxonomy = activeJobs.flatMap((job) =>
+    Object.values(FILTER_FIELD_MAP).flatMap((field) => {
+      const values = TAXONOMY.fields[field].values;
+      return values.includes(job[field]) ? [] : [`${job.job_id}:${field}=${job[field] || "<blank>"}`];
+    })
+  );
+  if (!invalid.length && !duplicateIds && !invalidTaxonomy.length) return;
 
   const requiredFields = [
     "job_id",
@@ -335,6 +367,7 @@ function validateActiveJobDetails(curatedJobs) {
   }).length;
   if (invalidUrls && !missing.some((item) => item.startsWith("url:"))) missing.push(`url format: ${invalidUrls}`);
   if (duplicateIds) missing.push(`duplicate job_id: ${duplicateIds}`);
+  if (invalidTaxonomy.length) missing.push(`invalid taxonomy: ${invalidTaxonomy.join(", ")}`);
   throw new Error(`Active curated jobs are missing detail fields (${missing.join(", ")}).`);
 }
 
@@ -1345,6 +1378,7 @@ function main() {
   copyAssets(recruiting);
   for (const [relativePath, html] of pages) writePage(relativePath, html);
   fs.writeFileSync(path.join(DIST_DIR, "assets", "jobs.json"), `${JSON.stringify(poolJobs, null, 2)}\n`);
+  fs.writeFileSync(path.join(DIST_DIR, "assets", "filter-options.json"), `${JSON.stringify(FILTER_OPTIONS, null, 2)}\n`);
   fs.writeFileSync(path.join(DIST_DIR, "assets", "issues.json"), `${JSON.stringify(publicIssues, null, 2)}\n`);
   fs.writeFileSync(path.join(DIST_DIR, "assets", "channels.json"), `${JSON.stringify(publicChannels, null, 2)}\n`);
 
@@ -1367,6 +1401,8 @@ if (require.main === module) main();
 
 module.exports = {
   CHANNELS,
+  FILTER_OPTIONS,
+  buildFilterOptions,
   buildIssuePageJobs,
   buildPublicChannels,
   buildPublicIssues,

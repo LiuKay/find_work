@@ -23,7 +23,7 @@ def reviewed_job(**overrides):
         "company_platform": "Example / Company Careers",
         "company": "Example",
         "job_group": "外企 APAC 岗位",
-        "job_direction": "客服",
+        "job_direction": "运营与客户服务",
         "work_mode": "APAC 远程",
         "experience": "1-3 年",
         "language": "双语",
@@ -149,7 +149,7 @@ class CuratedJobsTests(unittest.TestCase):
 
     def test_ttl_rules_are_7_14_and_21_days(self):
         seven = curated.occurrence_from_raw(
-            reviewed_job(job_direction="AI Trainer"), "2026-07-20", "2026-07-20"
+            reviewed_job(job_direction="数据与 AI", title="AI Trainer"), "2026-07-20", "2026-07-20"
         )
         fourteen = curated.occurrence_from_raw(reviewed_job(), "2026-07-20", "2026-07-20")
         twenty_one = curated.occurrence_from_raw(

@@ -13,6 +13,7 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 CURATED_SCRIPT = PROJECT_ROOT / "scripts" / "curated_jobs.py"
+TAXONOMY = json.loads((PROJECT_ROOT / "data" / "schema" / "job-taxonomy.json").read_text(encoding="utf-8"))["fields"]
 
 REQUIRED_FIELDS = [
     "title",
@@ -36,11 +37,12 @@ OPTIONAL_EXPLANATION_FIELDS = [
 ]
 
 JOB_GROUPS = {"外企中国岗位", "外企 APAC 岗位", "海外远程岗位", "中国可投待确认"}
-WORK_MODES = {"中国本地办公", "全职居家", "混合办公", "全球远程", "APAC 远程", "中国可投待确认"}
-EXPERIENCE = {"入门", "1-3 年", "3-5 年", "高级", "不明确"}
-LANGUAGE = {"中文", "英文", "双语", "其他", "不明确"}
-LEVELS = {"低", "中", "高"}
-CHINA_APPLICABILITY = {"高", "中", "待确认"}
+JOB_DIRECTIONS = set(TAXONOMY["job_direction"]["values"])
+WORK_MODES = set(TAXONOMY["work_mode"]["values"])
+EXPERIENCE = set(TAXONOMY["experience"]["values"])
+LANGUAGE = set(TAXONOMY["language"]["values"])
+LEVELS = set(TAXONOMY["application_barrier"]["values"])
+CHINA_APPLICABILITY = set(TAXONOMY["china_applicability"]["values"])
 
 
 def load_jobs(path: Path) -> list[dict[str, Any]]:
@@ -59,6 +61,8 @@ def validate_job(job: dict[str, Any], index: int) -> list[str]:
             errors.append(f"job {index}: missing {field}")
     if job.get("job_group") and job["job_group"] not in JOB_GROUPS:
         errors.append(f"job {index}: invalid job_group {job['job_group']}")
+    if job.get("job_direction") and job["job_direction"] not in JOB_DIRECTIONS:
+        errors.append(f"job {index}: invalid job_direction {job['job_direction']}")
     if job.get("work_mode") and job["work_mode"] not in WORK_MODES:
         errors.append(f"job {index}: invalid work_mode {job['work_mode']}")
     if job.get("experience") and job["experience"] not in EXPERIENCE:

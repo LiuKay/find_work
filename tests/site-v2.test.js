@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const {
   CHANNELS,
+  FILTER_OPTIONS,
   buildIssuePageJobs,
   buildPublicChannels,
   buildPublicIssues,
@@ -58,6 +59,9 @@ const expectedPublicIds = new Set(
 );
 
 assert.equal(CHANNELS.length, 6);
+assert.deepEqual(Object.keys(FILTER_OPTIONS).sort(), ["confidence", "direction", "experience", "language", "threshold", "workMode"]);
+assert.equal(FILTER_OPTIONS.direction.length, 12);
+assert.deepEqual(FILTER_OPTIONS.threshold, ["低", "中", "高"]);
 assert.deepEqual(
   CHANNELS.map((channel) => channel.id),
   ["low-english", "ops-cs", "support-tech", "remote-apac", "entry", "china-strong"]
@@ -84,6 +88,10 @@ assert.throws(() => validateActiveJobDetails([validActive, { ...validActive }]),
 assert.throws(
   () => validateActiveJobDetails([{ ...validActive, job_id: "j_123456789abc", url: "javascript:alert(1)" }]),
   /url format/
+);
+assert.throws(
+  () => validateActiveJobDetails([{ ...validActive, job_direction: "未经规范的方向" }]),
+  /invalid taxonomy/
 );
 const recruitingItem = {
   title: "Example <script>",
@@ -164,6 +172,7 @@ for (const file of [
   "assets/bookmarks.js",
   "assets/recent.js",
   "assets/jobs.json",
+  "assets/filter-options.json",
   "assets/issues.json",
   "assets/channels.json",
 ]) {
@@ -176,9 +185,11 @@ for (const channel of CHANNELS) {
 }
 
 const builtJobs = JSON.parse(fs.readFileSync(path.join(ROOT, "dist", "assets", "jobs.json"), "utf8"));
+const builtFilterOptions = JSON.parse(fs.readFileSync(path.join(ROOT, "dist", "assets", "filter-options.json"), "utf8"));
 const builtIssues = JSON.parse(fs.readFileSync(path.join(ROOT, "dist", "assets", "issues.json"), "utf8"));
 const builtChannels = JSON.parse(fs.readFileSync(path.join(ROOT, "dist", "assets", "channels.json"), "utf8"));
 assert.deepEqual(builtJobs, publicJobs);
+assert.deepEqual(builtFilterOptions, FILTER_OPTIONS);
 assert.deepEqual(builtIssues, publicIssues);
 assert.deepEqual(builtChannels, publicChannels);
 

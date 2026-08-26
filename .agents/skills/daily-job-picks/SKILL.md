@@ -141,9 +141,9 @@ Top-level title rules:
 ### 1. 岗位名称：
 公司 / 平台：
 岗位归类：外企中国岗位 / 外企 APAC 岗位 / 海外远程岗位 / 中国可投待确认
-岗位方向：客服 / 运营 / 内容 / 本地化 / 销售支持 / 技术 / 技术支持 / QA / 数据 / AI Trainer / 产品 / 项目管理 / 需求分析 / 系统分析 / 实施 / 解决方案 / HR / 供应链 / 销售 / 合同工 / 兼职 / 其他
-工作方式：中国本地办公 / 全职居家 / 混合办公 / 全球远程 / APAC 远程 / 中国可投待确认
-经验要求：入门 / 1-3 年 / 3-5 年 / 高级 / 不明确
+岗位方向：技术、测试与质量 / 数据与 AI / 产品与项目 / 技术支持与解决方案 / 运营与客户服务 / 销售与商务 / 市场、内容与本地化 / 供应链 / 人力资源 / 法务、合规与风控 / 教育与培训 / 其他
+工作方式：中国本地办公 / 中国远程 / 混合办公 / APAC 远程 / 全球远程 / 中国可投待确认
+经验要求：经验不限 / 入门 / 1-3 年 / 3-5 年 / 高级 / 不明确
 语言要求：中文 / 英文 / 双语 / 其他 / 不明确
 申请门槛：直接使用 application_barrier_note 的一句简短说明
 中国可投把握：高 / 中 / 待确认 + 一句简短说明
@@ -182,7 +182,7 @@ Before rendering Markdown, create a temporary JSON file containing the final job
     "company_platform": "Company / Greenhouse",
     "company": "Company",
     "job_group": "海外远程岗位",
-    "job_direction": "客服",
+    "job_direction": "运营与客户服务",
     "work_mode": "APAC 远程",
     "experience": "1-3 年",
     "language": "英文",

@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = ROOT / "data" / "curated" / "jobs.ndjson"
 DEFAULT_ISSUES = ROOT / "data" / "issues"
 DEFAULT_CANDIDATES = ROOT / "data" / "candidates"
+TAXONOMY_PATH = ROOT / "data" / "schema" / "job-taxonomy.json"
 PUBLIC_REQUIRED = ("title", "company", "url", "china_applicability", "application_barrier", "best_for")
 STATUSES = {"active", "expired", "closed"}
 TRANSIENT_OUTCOMES = {"failure", "network_error", "http_403", "rate_limited", "timeout", "suspect"}
@@ -63,6 +64,56 @@ CHANNELS = (
     },
 )
 CHANNEL_IDS = {item["id"] for item in CHANNELS}
+
+
+def load_taxonomy(path: Path = TAXONOMY_PATH) -> dict[str, Any]:
+    taxonomy = json.loads(path.read_text(encoding="utf-8"))
+    fields = taxonomy.get("fields") if isinstance(taxonomy, dict) else None
+    if not isinstance(fields, dict) or not fields:
+        raise ValueError(f"{path}: expected a non-empty fields object")
+    for field, config in fields.items():
+        values = config.get("values") if isinstance(config, dict) else None
+        aliases = config.get("aliases") if isinstance(config, dict) else None
+        if not isinstance(values, list) or not values or len(values) != len(set(values)):
+            raise ValueError(f"{path}: {field} must have unique values")
+        if not isinstance(aliases, dict) or any(value not in values for value in aliases.values()):
+            raise ValueError(f"{path}: {field} has an invalid alias target")
+    return taxonomy
+
+
+TAXONOMY = load_taxonomy()
+TAXONOMY_FIELDS = TAXONOMY["fields"]
+
+
+def normalize_taxonomy_fields(job: dict[str, Any]) -> dict[str, str]:
+    changes: dict[str, str] = {}
+    for field, config in TAXONOMY_FIELDS.items():
+        raw_value = str(job.get(field) or "")
+        value = plain_text(raw_value)
+        normalized = config["aliases"].get(value, value)
+        if normalized != raw_value:
+            job[field] = normalized
+            changes[field] = normalized
+    return changes
+
+
+def taxonomy_issues(jobs: list[dict[str, Any]]) -> list[dict[str, str]]:
+    issues: list[dict[str, str]] = []
+    for job in jobs:
+        for field, config in TAXONOMY_FIELDS.items():
+            value = plain_text(job.get(field))
+            if value in config["values"] or (not value and job.get("status") != "active"):
+                continue
+            issues.append(
+                {
+                    "job_id": str(job.get("job_id", "")),
+                    "status": str(job.get("status", "")),
+                    "field": field,
+                    "value": value,
+                    "url": str(job.get("url", "")),
+                }
+            )
+    return issues
 
 
 def plain_text(value: Any) -> str:
@@ -164,6 +215,7 @@ def infer_timezone_friendly(job: dict[str, Any]) -> bool:
 
 def channels_for(job: dict[str, Any]) -> list[str]:
     direction = str(job.get("job_direction", ""))
+    title = str(job.get("title", ""))
     language = str(job.get("language", ""))
     barrier_note = str(job.get("application_barrier_note", ""))
     work_mode = str(job.get("work_mode", ""))
@@ -172,7 +224,7 @@ def channels_for(job: dict[str, Any]) -> list[str]:
         channels.append("low-english")
     if re.search(r"运营|客服|客户成功|售后支持", direction):
         channels.append("ops-cs")
-    if re.search(r"技术支持|IT\s*运营|QA|测试", direction, re.I):
+    if direction == "技术支持与解决方案" or re.search(r"技术支持|IT\s*运营|QA|测试|quality", title, re.I):
         channels.append("support-tech")
     if re.search(r"远程", work_mode) and bool(job.get("timezone_friendly")):
         channels.append("remote-apac")
@@ -314,6 +366,7 @@ def occurrence_from_raw(raw: dict[str, Any], issue_id: str, issue_date: str) -> 
     job["china_applicability"] = normalized_level(
         job.get("china_applicability"), ("高", "中", "待确认", "低", "不明确")
     )
+    normalize_taxonomy_fields(job)
     job["first_seen_date"] = issue_date
     job["last_featured_date"] = issue_date
     job["featured_issue_ids"] = [issue_id]
@@ -382,6 +435,15 @@ def validate_job(job: dict[str, Any]) -> None:
     channels = job.get("channels", [])
     if not isinstance(channels, list) or any(item not in CHANNEL_IDS for item in channels):
         raise ValueError(f"{job['job_id']}: invalid channels")
+    expected_channels = channels_for(job)
+    if channels != expected_channels:
+        raise ValueError(f"{job['job_id']}: channels do not match normalized job fields")
+    invalid_taxonomy = taxonomy_issues([job])
+    if invalid_taxonomy:
+        issue = invalid_taxonomy[0]
+        raise ValueError(
+            f"{job['job_id']}: invalid {issue['field']} {issue['value'] or '<blank>'}"
+        )
     if job["status"] == "active" and not public_complete(job):
         missing = [field for field in PUBLIC_REQUIRED if not str(job.get(field, "")).strip()]
         raise ValueError(f"{job['job_id']}: active job missing {', '.join(missing)}")
@@ -619,6 +681,35 @@ def check_inventory(output: Path, issues_dir: Path) -> dict[str, int]:
     return {"jobs": len(jobs), "issues": len(issues), "active": sum(job["status"] == "active" for job in jobs)}
 
 
+def normalize_inventory_taxonomy(output: Path, write: bool = False) -> dict[str, Any]:
+    jobs = read_ndjson(output)
+    changed_by_field = {**{field: 0 for field in TAXONOMY_FIELDS}, "channels": 0}
+    changed_jobs = 0
+    for job in jobs:
+        changes = normalize_taxonomy_fields(job)
+        expected_channels = channels_for(job)
+        channels_changed = job.get("channels") != expected_channels
+        if channels_changed:
+            job["channels"] = expected_channels
+            changed_by_field["channels"] += 1
+        if changes or channels_changed:
+            changed_jobs += 1
+            for field in changes:
+                changed_by_field[field] += 1
+    unresolved = taxonomy_issues(jobs)
+    if write:
+        if unresolved:
+            raise ValueError(f"taxonomy normalization has {len(unresolved)} unresolved value(s)")
+        atomic_write_ndjson(output, jobs)
+    return {
+        "jobs": len(jobs),
+        "changed_jobs": changed_jobs,
+        "changed_by_field": changed_by_field,
+        "unresolved": unresolved,
+        "written": write,
+    }
+
+
 def upsert(
     input_path: Path,
     day: str,
@@ -814,6 +905,10 @@ def build_parser() -> argparse.ArgumentParser:
     check_parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     check_parser.add_argument("--issues-dir", type=Path, default=DEFAULT_ISSUES)
 
+    normalize_parser = sub.add_parser("normalize", help="audit or apply controlled taxonomy aliases")
+    normalize_parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    normalize_parser.add_argument("--write", action="store_true")
+
     upsert_parser = sub.add_parser("upsert", help="upsert reviewed final jobs and one issue")
     upsert_parser.add_argument("--input", type=Path, required=True)
     upsert_parser.add_argument("--date", required=True)
@@ -851,6 +946,8 @@ def main() -> int:
             result: Any = {"migrated_jobs": jobs, "issues": issues}
         elif args.command == "check":
             result = check_inventory(args.output, args.issues_dir)
+        elif args.command == "normalize":
+            result = normalize_inventory_taxonomy(args.output, args.write)
         elif args.command == "upsert":
             count, job_ids = upsert(
                 args.input,
