@@ -10,6 +10,7 @@ const {
   matchesChannel,
   readRecruiting,
   renderRecruiting,
+  validateActiveJobDetails,
 } = require("../scripts/build-site");
 const { recommendSurveyChannels } = require("../site/survey");
 
@@ -33,9 +34,23 @@ const expectedPublicIds = new Set(
     .filter(
       (job) =>
         job.status === "active" &&
-        ["title", "company", "url", "china_applicability", "application_barrier", "best_for"].every(
-          (field) => String(job[field] || "").trim()
-        )
+        [
+          "job_id",
+          "title",
+          "company",
+          "url",
+          "china_applicability",
+          "china_applicability_note",
+          "application_barrier",
+          "application_barrier_note",
+          "best_for",
+          "notes",
+          "timezone_judgment",
+          "last_featured_date",
+        ].every((field) => String(job[field] || "").trim()) &&
+        Array.isArray(job.featured_issue_ids) &&
+        job.featured_issue_ids.length > 0 &&
+        /^j_[a-f0-9]{12,}$/.test(job.job_id)
     )
     .map((job) => job.job_id)
 );
@@ -57,6 +72,15 @@ for (const [channelId, payload] of Object.entries(surveyCases)) {
   assert.ok(recommendSurveyChannels(payload).includes(channelId), `survey mapping missing ${channelId}`);
 }
 assert.ok(publicJobs.length > 0);
+assert.ok(publicJobs.every((job) => job.detailUrl === `/jobs/${job.id}/`));
+assert.ok(publicJobs.every((job) => job.chinaApplicabilityNote && job.applicationBarrierNote));
+assert.equal(new Set(publicJobs.map((job) => job.detailUrl)).size, publicJobs.length);
+const validActive = curated.find((job) => job.status === "active");
+assert.throws(() => validateActiveJobDetails([validActive, { ...validActive }]), /duplicate job_id/);
+assert.throws(
+  () => validateActiveJobDetails([{ ...validActive, job_id: "j_123456789abc", url: "javascript:alert(1)" }]),
+  /url format/
+);
 const recruitingItem = {
   title: "Example <script>",
   organization: "Example",
@@ -127,8 +151,14 @@ execFileSync(process.execPath, ["scripts/build-site.js"], {
 for (const file of [
   "index.html",
   "pool/index.html",
+  "me/index.html",
   "recruiting/index.html",
   "assets/recruiting-originwise.png",
+  "assets/mobile-redesign.css",
+  "assets/app.js",
+  "assets/storage.js",
+  "assets/bookmarks.js",
+  "assets/recent.js",
   "assets/jobs.json",
   "assets/issues.json",
   "assets/channels.json",
@@ -148,15 +178,84 @@ assert.deepEqual(builtJobs, publicJobs);
 assert.deepEqual(builtIssues, publicIssues);
 assert.deepEqual(builtChannels, publicChannels);
 
-const todayIds = new Set(
-  builtIssues.filter((issue) => issue.date === "2026-08-05").flatMap((issue) => issue.job_ids)
-);
 const home = fs.readFileSync(path.join(ROOT, "dist", "index.html"), "utf8");
-const todaySection = home.split('id="today-jobs"')[1].split('aria-labelledby="channels-title"')[0];
-const renderedTodayIds = new Set(
-  Array.from(todaySection.matchAll(/data-job-id="(j_[a-f0-9]{12})"/g), (match) => match[1])
+const latestIssueAtBaseline = builtIssues.find((issue) => issue.date <= "2026-08-05");
+const expectedHomeIds = latestIssueAtBaseline.job_ids.slice(0, 3);
+const renderedHomeIds = Array.from(home.matchAll(/data-job-id="(j_[a-f0-9]{12})"/g), (match) => match[1]);
+assert.deepEqual(renderedHomeIds, expectedHomeIds);
+assert.ok(renderedHomeIds.length <= 3);
+assert.match(home, /Daily Brief/);
+assert.match(home, /remote-work-hero\.jpg/);
+assert.match(home, /class="app-icon icon-search"/);
+assert.match(home, /<a class="notification-button" href="\/me\/"/);
+assert.doesNotMatch(home, /<button class="notification-button"/);
+assert.match(home, /name="query"/);
+assert.equal((home.match(/class="quick-filter-grid"/g) || []).length, 1);
+const quickFilterMarkup = home.split('class="quick-filter-grid"')[1].split("</div>")[0];
+assert.equal((quickFilterMarkup.match(/<a href=/g) || []).length, 6);
+assert.doesNotMatch(quickFilterMarkup, /filter-chevron|nav-arrow-down/);
+assert.match(home, /<nav class="mobile-tabbar" aria-label="移动端主导航">/);
+for (const href of ["/", "/pool/", "/archive/", "/me/"]) {
+  assert.match(home, new RegExp(`<a href="${href.replace(/\//g, "\\/")}"`));
+}
+assert.match(home, /<a href="\/" aria-current="page">/);
+assert.equal((home.match(/data-bookmark-job=/g) || []).length, expectedHomeIds.length);
+const homeCards = Array.from(home.matchAll(/<article class="mobile-job-card"[\s\S]*?<\/article>/g), (match) => match[0]);
+assert.equal(homeCards.length, expectedHomeIds.length);
+for (const card of homeCards) {
+  assert.equal((card.match(/<a /g) || []).length, 1);
+  assert.match(card, /<a class="mobile-job-card-link" href="\/jobs\/j_[a-f0-9]{12}\//);
+  assert.doesNotMatch(card, /target="_blank"/);
+}
+for (const jobId of expectedHomeIds) {
+  assert.match(home, new RegExp(`href="/jobs/${jobId}/"`));
+}
+
+const sampleIssue = builtIssues.find((issue) => issue.job_ids.length > 0);
+const samplePickPage = fs.readFileSync(path.join(ROOT, "dist", "picks", sampleIssue.issue_id, "index.html"), "utf8");
+assert.match(samplePickPage, /class="pick-list-page"/);
+assert.match(samplePickPage, /data-pick-filter="" aria-pressed="true"/);
+assert.equal((samplePickPage.match(/class="pick-job-card"/g) || []).length, sampleIssue.job_ids.length);
+for (const jobId of sampleIssue.job_ids) assert.match(samplePickPage, new RegExp(`href="/jobs/${jobId}/"`));
+assert.doesNotMatch(samplePickPage, /class="job-direct-link"/);
+
+const jobPageDirectories = fs
+  .readdirSync(path.join(ROOT, "dist", "jobs"), { withFileTypes: true })
+  .filter((entry) => entry.isDirectory());
+assert.equal(jobPageDirectories.length, publicJobs.length);
+const sampleJob = publicJobs[0];
+const sampleJobPage = fs.readFileSync(path.join(ROOT, "dist", "jobs", sampleJob.id, "index.html"), "utf8");
+const sampleJobMain = sampleJobPage.split('<main class="job-detail-page"')[1];
+for (const text of ["投递判断", "申请门槛", "适合谁", "注意事项", "时差判断", "所属精选", "原岗位"]) {
+  assert.match(sampleJobMain, new RegExp(text));
+}
+const detailOrder = ["投递判断", "申请门槛", "适合谁", "注意事项", "时差判断", "所属精选", "原岗位"].map(
+  (text) => sampleJobMain.indexOf(text)
 );
-assert.deepEqual(renderedTodayIds, todayIds);
+assert.ok(detailOrder.every((position) => position >= 0));
+assert.deepEqual([...detailOrder].sort((a, b) => a - b), detailOrder);
+assert.match(sampleJobPage, /class="sticky-apply"/);
+assert.match(sampleJobPage, /target="_blank" rel="noopener noreferrer"/);
+assert.doesNotMatch(sampleJobPage, /mobile-tabbar[^]*aria-current="page"/);
+
+const poolPage = fs.readFileSync(path.join(ROOT, "dist", "pool", "index.html"), "utf8");
+assert.match(poolPage, /<option value="latest">最新发布<\/option>/);
+assert.match(poolPage, /<option value="confidence">中国可投优先<\/option>/);
+assert.match(poolPage, /<option value="barrier">低门槛优先<\/option>/);
+assert.match(poolPage, /<select name="language" data-filter-options="language"><option value="">英文要求<\/option><\/select>/);
+assert.equal((poolPage.match(/name="language"/g) || []).length, 1);
+assert.doesNotMatch(poolPage, /data-quick-preset/);
+assert.doesNotMatch(poolPage, /data-sort-shortcut/);
+assert.match(poolPage, /data-filter-toggle/);
+const archivePage = fs.readFileSync(path.join(ROOT, "dist", "archive", "index.html"), "utf8");
+assert.match(archivePage, /class="archive-segments"/);
+assert.match(archivePage, /data-archive-search/);
+for (const asset of ["home-simple.svg", "search.svg", "bookmark.svg", "filter.svg"]) {
+  assert.ok(fs.existsSync(path.join(ROOT, "dist", "assets", "icons", asset)), `missing icon asset: ${asset}`);
+}
+assert.ok(
+  fs.readdirSync(path.join(ROOT, "dist", "assets", "icons")).every((asset) => asset.endsWith(".svg") || asset === "LICENSE-iconoir.txt")
+);
 
 execFileSync(process.execPath, ["scripts/build-site.js"], {
   cwd: ROOT,
@@ -164,15 +263,12 @@ execFileSync(process.execPath, ["scripts/build-site.js"], {
   stdio: "pipe",
 });
 const nextDayHome = fs.readFileSync(path.join(ROOT, "dist", "index.html"), "utf8");
-const nextDaySection = nextDayHome.split('id="today-jobs"')[1].split('aria-labelledby="channels-title"')[0];
 const nextDayLatestDate = publicIssues.find((issue) => issue.date <= "2026-08-06").date;
-const nextDayIds = new Set(
-  publicIssues.filter((issue) => issue.date === nextDayLatestDate).flatMap((issue) => issue.job_ids)
-);
-assert.match(nextDaySection, new RegExp(`最新更新 <small>${nextDayLatestDate}<\\/small>`));
+const nextDayIssue = publicIssues.find((issue) => issue.date === nextDayLatestDate);
+assert.match(nextDayHome, new RegExp(`datetime="${nextDayLatestDate}"`));
 assert.deepEqual(
-  new Set(Array.from(nextDaySection.matchAll(/data-job-id="(j_[a-f0-9]{12})"/g), (match) => match[1])),
-  nextDayIds
+  Array.from(nextDayHome.matchAll(/data-job-id="(j_[a-f0-9]{12})"/g), (match) => match[1]),
+  nextDayIssue.job_ids.slice(0, 3)
 );
 
 const publicAssets = [
@@ -183,4 +279,14 @@ const publicAssets = [
 assert.doesNotMatch(publicAssets, /candidate_id|pipeline_status|screen_reason|"reviewer"/);
 const siteStyles = fs.readFileSync(path.join(ROOT, "site", "styles.css"), "utf8");
 assert.doesNotMatch(siteStyles, /\.archive-layout h1\s*\{[^}]*max-width:\s*1[02]ch/s);
+const mobileStyles = fs.readFileSync(path.join(ROOT, "site", "styles", "mobile-redesign.css"), "utf8");
+assert.match(mobileStyles, /--app-topbar-height:\s*56px/);
+assert.match(mobileStyles, /env\(safe-area-inset-bottom\)/);
+assert.match(mobileStyles, /@media \(prefers-reduced-motion: reduce\)/);
+assert.match(mobileStyles, /:focus-visible/);
+assert.doesNotMatch(mobileStyles, /transition:\s*all/);
+assert.match(mobileStyles, /\.quick-filter-grid strong\s*\{[^}]*align-self:\s*center/s);
+assert.match(mobileStyles, /\.latest-note-actions a\s*\{[^}]*margin:\s*0/s);
+const previewServer = fs.readFileSync(path.join(ROOT, "scripts", "serve-site.js"), "utf8");
+assert.match(previewServer, /"\.svg":\s*"image\/svg\+xml; charset=utf-8"/);
 console.log("site v2 self-check passed");

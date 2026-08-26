@@ -2,7 +2,7 @@
   "scripts": {
     "build": "node scripts/build-site.js",
     "dev": "node scripts/build-site.js && node scripts/serve-site.js",
-    "test": "node tests/pool.test.js && node tests/site-v2.test.js"
+    "test": "node tests/pool.test.js && node tests/site-v2.test.js && node tests/storage.test.js"
   },
   "engines": {
     "node": ">=16"
