@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const {
   CHANNELS,
+  buildIssuePageJobs,
   buildPublicChannels,
   buildPublicIssues,
   buildPublicJobs,
@@ -26,6 +27,7 @@ const issues = fs
   .map((file) => JSON.parse(fs.readFileSync(path.join(ROOT, "data", "issues", file), "utf8")));
 
 const publicJobs = buildPublicJobs(curated, issues);
+const issuePageJobs = buildIssuePageJobs(curated, issues);
 const publicIssues = buildPublicIssues(issues, publicJobs);
 const publicChannels = buildPublicChannels(publicJobs, "2026-08-05");
 const publicIds = new Set(publicJobs.map((job) => job.id));
@@ -72,6 +74,8 @@ for (const [channelId, payload] of Object.entries(surveyCases)) {
   assert.ok(recommendSurveyChannels(payload).includes(channelId), `survey mapping missing ${channelId}`);
 }
 assert.ok(publicJobs.length > 0);
+assert.ok(issuePageJobs.some((job) => !publicIds.has(job.id)));
+assert.ok(issues.every((issue) => issue.job_ids.every((jobId) => issuePageJobs.some((job) => job.id === jobId))));
 assert.ok(publicJobs.every((job) => job.detailUrl === `/jobs/${job.id}/`));
 assert.ok(publicJobs.every((job) => job.chinaApplicabilityNote && job.applicationBarrierNote));
 assert.equal(new Set(publicJobs.map((job) => job.detailUrl)).size, publicJobs.length);
@@ -219,10 +223,15 @@ assert.equal((samplePickPage.match(/class="pick-job-card"/g) || []).length, samp
 for (const jobId of sampleIssue.job_ids) assert.match(samplePickPage, new RegExp(`href="/jobs/${jobId}/"`));
 assert.doesNotMatch(samplePickPage, /class="job-direct-link"/);
 
+const statusById = new Map(curated.map((job) => [job.job_id, job.status]));
+const historicalIssue = issues.find((issue) => issue.job_ids.some((jobId) => statusById.get(jobId) !== "active"));
+const historicalPickPage = fs.readFileSync(path.join(ROOT, "dist", "picks", historicalIssue.issue_id, "index.html"), "utf8");
+assert.equal((historicalPickPage.match(/class="pick-job-card"/g) || []).length, historicalIssue.job_ids.length);
+
 const jobPageDirectories = fs
   .readdirSync(path.join(ROOT, "dist", "jobs"), { withFileTypes: true })
   .filter((entry) => entry.isDirectory());
-assert.equal(jobPageDirectories.length, publicJobs.length);
+assert.equal(jobPageDirectories.length, issuePageJobs.length);
 const sampleJob = publicJobs[0];
 const sampleJobPage = fs.readFileSync(path.join(ROOT, "dist", "jobs", sampleJob.id, "index.html"), "utf8");
 const sampleJobMain = sampleJobPage.split('<main class="job-detail-page"')[1];

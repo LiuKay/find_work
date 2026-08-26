@@ -1,9 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const crypto = require("crypto");
 
 const ROOT = path.resolve(__dirname, "..");
-const PICKS_DIR = path.join(ROOT, "job-picks");
 const CURATED_FILE = path.join(ROOT, "data", "curated", "jobs.ndjson");
 const ISSUES_DIR = path.join(ROOT, "data", "issues");
 const RECRUITING_FILE = path.join(ROOT, "data", "recruiting.json");
@@ -162,175 +160,6 @@ function markdownToHtml(markdown) {
   return html.join("\n");
 }
 
-function plainMarkdown(value) {
-  return (value || "")
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1 $2")
-    .replace(/[*_`]/g, "")
-    .trim();
-}
-
-function extractMarkdownUrl(value) {
-  const markdownLink = (value || "").match(/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/);
-  if (markdownLink) return markdownLink[1];
-  const bareUrl = (value || "").match(/https?:\/\/\S+/);
-  return bareUrl ? bareUrl[0] : "";
-}
-
-function normalizeJobUrl(value) {
-  if (!value) return "";
-  try {
-    const url = new URL(value);
-    url.hash = "";
-    for (const key of Array.from(url.searchParams.keys())) {
-      if (/^(utm_|gh_src$|source$)/i.test(key)) url.searchParams.delete(key);
-    }
-    url.searchParams.sort();
-    url.pathname = url.pathname.replace(/\/+$/, "");
-    return url.toString();
-  } catch {
-    return value.trim();
-  }
-}
-
-function readStructuredJobs(slug) {
-  const filePath = path.join(PICKS_DIR, `${slug}-final-jobs.json`);
-  if (!fs.existsSync(filePath)) return [];
-
-  const source = fs.readFileSync(filePath, "utf8").trim();
-  try {
-    const jobs = JSON.parse(source);
-    return Array.isArray(jobs) ? jobs : [];
-  } catch {
-    return source.split("\n").filter(Boolean).map(JSON.parse);
-  }
-}
-
-function parseJobBlock(block, pick, index) {
-  const heading = block.heading.trim();
-  const titleMatch = heading.match(/岗位名称[：:]\s*(.+)$/);
-  const fields = {};
-
-  for (const line of block.lines) {
-    const match = line.match(/^([^：:]+)[：:]\s*(.*)$/);
-    if (!match) continue;
-    fields[match[1].trim()] = match[2].trim();
-  }
-
-  const title = titleMatch ? titleMatch[1].trim() : heading.replace(/^\d+\.\s*/, "");
-  const company = plainMarkdown(fields["公司 / 平台"] || "");
-  const direction = plainMarkdown(fields["岗位方向"] || "");
-  const workMode = plainMarkdown(fields["工作方式"] || "");
-  const experience = plainMarkdown(fields["经验要求"] || "");
-  const language = plainMarkdown(fields["语言要求"] || "");
-  const confidence = plainMarkdown(fields["中国可投把握"] || "");
-  const threshold = plainMarkdown(fields["申请门槛"] || "");
-  const fit = plainMarkdown(fields["适合谁"] || "");
-  const notes = plainMarkdown(fields["注意事项"] || "");
-  const timezone = plainMarkdown(fields["时差判断"] || "");
-  const link = extractMarkdownUrl(fields["链接"] || "");
-
-  return {
-    id: `${pick.slug}-${index + 1}`,
-    issueSlug: pick.slug,
-    issueTitle: pick.title,
-    issueUrl: `/picks/${pick.slug}/#job-${index + 1}`,
-    date: pick.date,
-    number: index + 1,
-    title,
-    company,
-    direction,
-    workMode,
-    experience,
-    language,
-    confidence,
-    timezone,
-    threshold,
-    fit,
-    notes,
-    link,
-    searchText: [
-      pick.date,
-      pick.title,
-      title,
-      company,
-      direction,
-      workMode,
-      experience,
-      language,
-      confidence,
-      threshold,
-      fit,
-      notes,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase(),
-  };
-}
-
-function extractJobs(pick) {
-  const lines = pick.markdown.replace(/\r\n/g, "\n").split("\n");
-  const blocks = [];
-  let current = null;
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    const heading = line.match(/^###\s+\d+\.\s+岗位名称[：:]\s*(.+)$/);
-    if (heading) {
-      if (current) blocks.push(current);
-      current = { heading: line.replace(/^###\s+/, ""), lines: [] };
-      continue;
-    }
-
-    if (current) {
-      current.lines.push(line);
-    }
-  }
-
-  if (current) blocks.push(current);
-  return blocks.map((block, index) => {
-    const job = parseJobBlock(block, pick, index);
-    const jobUrl = normalizeJobUrl(job.link);
-    const structured =
-      pick.structuredJobs.find((item) => jobUrl && normalizeJobUrl(item.url) === jobUrl) ||
-      pick.structuredJobs.find((item) => item.title === job.title) ||
-      {};
-    return {
-      ...job,
-      applicationBarrier: plainMarkdown(structured.application_barrier || job.threshold),
-      chinaApplicability: plainMarkdown(structured.china_applicability || job.confidence),
-    };
-  });
-}
-
-function getPickFiles() {
-  if (!fs.existsSync(PICKS_DIR)) return [];
-  return fs
-    .readdirSync(PICKS_DIR)
-    // Accept date-based markdown files whose optional suffix may contain
-    // non-ASCII labels such as Chinese topic names.
-    .filter((file) => /^\d{4}-\d{2}-\d{2}(?:-[^.]+)?\.md$/.test(file))
-    .sort()
-    .reverse();
-}
-
-function readPick(file) {
-  const filePath = path.join(PICKS_DIR, file);
-  const markdown = fs.readFileSync(filePath, "utf8");
-  const slug = file.replace(/\.md$/, "");
-  const firstHeading = markdown.match(/^#\s+(.+)$/m);
-  const dateMatch = slug.match(/^(\d{4}-\d{2}-\d{2})/);
-  return {
-    file,
-    slug,
-    title: firstHeading ? firstHeading[1].trim() : slug,
-    date: dateMatch ? dateMatch[1] : "未标日期",
-    markdown,
-    html: markdownToHtml(markdown),
-    structuredJobs: readStructuredJobs(slug),
-  };
-}
-
 function readAboutPage() {
   const fallbackMarkdown = "# 关于 Find Work\n\nFind Work 是一个面向中国申请者的岗位筛选网站。";
   const markdown = fs.existsSync(ABOUT_FILE) ? fs.readFileSync(ABOUT_FILE, "utf8") : fallbackMarkdown;
@@ -368,51 +197,6 @@ function poolCutoffDate(asOfDate) {
   return date.toISOString().slice(0, 10);
 }
 
-function buildPoolJobs(picks, asOfDate = poolAsOfDate()) {
-  const cutoff = poolCutoffDate(asOfDate);
-  const jobsByIdentity = new Map();
-
-  for (const pick of picks.filter((item) => item.date <= asOfDate)) {
-    for (const job of extractJobs(pick)) {
-      const chinaApplicability = String(job.chinaApplicability).match(/^(高|中|低|待确认|不明确)/)?.[0];
-      const applicationBarrier = String(job.applicationBarrier).match(/^(高|中|低)/)?.[0] || "待确认";
-      if (!job.title || !job.company || !job.link || !chinaApplicability || !job.applicationBarrier || !job.fit) {
-        continue;
-      }
-
-      // ponytail: direct-link identity is enough until redirects create measurable duplicate noise.
-      const identity = normalizeJobUrl(job.link);
-      const jobId = `j_${crypto.createHash("sha256").update(identity).digest("hex").slice(0, 12)}`;
-      const existing = jobsByIdentity.get(identity);
-
-      if (existing) {
-        existing.firstSeenDate = [existing.firstSeenDate, job.date].sort()[0];
-        existing.lastFeaturedDate = [existing.lastFeaturedDate, job.date].sort().reverse()[0];
-        if (!existing.featuredIssueSlugs.includes(job.issueSlug)) existing.featuredIssueSlugs.push(job.issueSlug);
-        continue;
-      }
-
-      jobsByIdentity.set(identity, {
-        ...job,
-        id: jobId,
-        applicationBarrier,
-        chinaApplicability,
-        firstSeenDate: job.date,
-        lastFeaturedDate: job.date,
-        featuredIssueSlugs: [job.issueSlug],
-      });
-    }
-  }
-
-  const applicabilityRank = { 高: 3, 中: 2, 低: 1 };
-  return Array.from(jobsByIdentity.values())
-    .filter((job) => job.lastFeaturedDate >= cutoff)
-    .sort((a, b) => {
-      const rank = (job) => applicabilityRank[String(job.chinaApplicability).match(/高|中|低/)?.[0]] || 0;
-      return rank(b) - rank(a) || b.lastFeaturedDate.localeCompare(a.lastFeaturedDate);
-    });
-}
-
 function readNdjson(filePath) {
   if (!fs.existsSync(filePath)) return [];
   return fs
@@ -429,6 +213,12 @@ function readIssues(issuesDir = ISSUES_DIR) {
     .filter((file) => file.endsWith(".json"))
     .sort()
     .map((file) => JSON.parse(fs.readFileSync(path.join(issuesDir, file), "utf8")));
+}
+
+function picksFromIssues(issues) {
+  return issues
+    .map((issue) => ({ slug: issue.issue_id, title: issue.title, date: issue.date }))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.slug.localeCompare(a.slug));
 }
 
 function readRecruiting(filePath = RECRUITING_FILE) {
@@ -481,6 +271,21 @@ function isPublicCuratedJob(job) {
     job.featured_issue_ids.length > 0 &&
     /^j_[a-f0-9]{12,}$/.test(job.job_id)
   );
+}
+
+function isDisplayableCuratedJob(job) {
+  try {
+    const url = new URL(String(job && job.url ? job.url : ""));
+    return (
+      /^j_[a-f0-9]{12,}$/.test(String(job.job_id || "")) &&
+      Boolean(String(job.title || "").trim()) &&
+      Boolean(String(job.company || "").trim()) &&
+      ["http:", "https:"].includes(url.protocol) &&
+      Boolean(url.hostname)
+    );
+  } catch {
+    return false;
+  }
 }
 
 function validateActiveJobDetails(curatedJobs) {
@@ -559,34 +364,42 @@ function publicJobFromCurated(job, issueById) {
   return {
     id: job.job_id,
     detailUrl: `/jobs/${job.job_id}/`,
-    date: job.last_featured_date,
-    updatedAt: job.last_featured_date,
-    firstSeenDate: job.first_seen_date,
-    lastFeaturedDate: job.last_featured_date,
+    date: job.last_featured_date || "",
+    updatedAt: job.last_featured_date || "",
+    firstSeenDate: job.first_seen_date || "",
+    lastFeaturedDate: job.last_featured_date || "",
     featuredIssueSlugs,
     issueSlug,
     issueTitle: issue.title || issueSlug,
     issueUrl: issueSlug ? `/picks/${issueSlug}/` : "/archive/",
-    title: job.title,
-    company: job.company,
+    title: job.title || "",
+    company: job.company || "",
     direction: job.job_direction || "",
     workMode: job.work_mode || "",
     experience: job.experience || "",
     language: job.language || "",
-    applicationBarrier: job.application_barrier,
-    applicationBarrierNote: job.application_barrier_note,
-    chinaApplicability: job.china_applicability,
-    chinaApplicabilityNote: job.china_applicability_note,
-    threshold: job.application_barrier_note || job.application_barrier,
+    applicationBarrier: job.application_barrier || "",
+    applicationBarrierNote: job.application_barrier_note || "",
+    chinaApplicability: job.china_applicability || "",
+    chinaApplicabilityNote: job.china_applicability_note || "",
+    threshold: job.application_barrier_note || job.application_barrier || "",
     confidence: [job.china_applicability, job.china_applicability_note].filter(Boolean).join("，"),
     timezone: job.timezone_judgment || "",
     timezoneFriendly: Boolean(job.timezone_friendly),
-    fit: job.best_for,
+    fit: job.best_for || "",
     notes: job.notes || "",
-    link: job.url,
+    link: job.url || "",
     channels: Array.isArray(job.channels) ? job.channels : [],
     searchText,
   };
+}
+
+function buildIssuePageJobs(curatedJobs, issues) {
+  const referencedIds = new Set(issues.flatMap((issue) => issue.job_ids || []));
+  const issueById = new Map(issues.map((issue) => [issue.issue_id, issue]));
+  return curatedJobs
+    .filter((job) => referencedIds.has(job.job_id) && isDisplayableCuratedJob(job))
+    .map((job) => publicJobFromCurated(job, issueById));
 }
 
 function buildPublicJobs(curatedJobs, issues) {
@@ -960,20 +773,6 @@ function renderPickPage(pick, poolJobs = [], issue = null) {
   const jobsById = new Map(poolJobs.map((job) => [job.id, job]));
   const issueJobs = (issue?.job_ids || []).map((jobId) => jobsById.get(jobId)).filter(Boolean);
 
-  if (!issueJobs.length) {
-    return pageTemplate({
-      title: `${pick.title} | Find Work`,
-      description: `${pick.date} 的外企和海外远程岗位精选。`,
-      canonicalPath: `/picks/${pick.slug}/`,
-      body: `<main class="reading-layout">
-  <a class="back-link" href="/archive/">← 查看全部归档</a>
-  <article class="pick-article">
-    ${pick.html}
-  </article>
-</main>`,
-    });
-  }
-
   return pageTemplate({
     title: `${pick.title} | Find Work`,
     description: `${pick.date} 的外企和海外远程岗位精选。`,
@@ -995,7 +794,7 @@ function renderPickPage(pick, poolJobs = [], issue = null) {
     ${Array.from(new Set(issueJobs.map((job) => job.direction).filter(Boolean))).map((direction) => `<button type="button" data-pick-filter="${escapeHtml(direction)}" aria-pressed="false">${escapeHtml(direction)} <span>${issueJobs.filter((job) => job.direction === direction).length}</span></button>`).join("")}
   </nav>
   <section class="pick-job-list" aria-label="本期岗位">
-    ${issueJobs.map(renderPickJobCard).join("\n")}
+    ${issueJobs.map(renderPickJobCard).join("\n") || '<p class="home-empty">本期岗位已不在当前可投库。</p>'}
   </section>
   <aside class="pick-list-disclaimer">${appIcon("warning-circle")}<span>岗位信息可能发生变化，申请前请以原岗位页面为准</span></aside>
   <p class="share-status" data-share-status role="status" aria-live="polite"></p>
@@ -1510,7 +1309,6 @@ function copyAssets(recruiting = []) {
 
 function main() {
   const recruiting = readRecruiting();
-  const picks = getPickFiles().map(readPick);
   const asOfDate = poolAsOfDate();
   if (!fs.existsSync(CURATED_FILE)) {
     throw new Error("Missing data/curated/jobs.ndjson; run scripts/curated_jobs.py migrate first.");
@@ -1518,7 +1316,9 @@ function main() {
   const curatedJobs = readNdjson(CURATED_FILE);
   const issues = readIssues();
   const poolJobs = buildPublicJobs(curatedJobs, issues);
+  const issuePageJobs = buildIssuePageJobs(curatedJobs, issues);
   const publicIssues = buildPublicIssues(issues, poolJobs);
+  const picks = picksFromIssues(issues);
   const publicChannels = buildPublicChannels(poolJobs, asOfDate);
   const pages = [
     ["index.html", renderIndex(picks, poolJobs, publicIssues, publicChannels, asOfDate)],
@@ -1535,9 +1335,9 @@ function main() {
     ]),
     ...picks.map((pick) => [
       path.join("picks", pick.slug, "index.html"),
-      renderPickPage(pick, poolJobs, publicIssues.find((issue) => issue.issue_id === pick.slug)),
+      renderPickPage(pick, issuePageJobs, issues.find((issue) => issue.issue_id === pick.slug)),
     ]),
-    ...poolJobs.map((job) => [path.join("jobs", job.id, "index.html"), renderJobPage(job)]),
+    ...issuePageJobs.map((job) => [path.join("jobs", job.id, "index.html"), renderJobPage(job)]),
   ];
 
   // Keep the last successful dist intact when source validation or rendering fails.
@@ -1559,7 +1359,7 @@ function main() {
   );
 
   console.log(
-    `Built ${picks.length} job pick page(s), ${poolJobs.length} active pool job(s), ${poolJobs.length} job detail page(s), and ${CHANNELS.length} channel(s) into dist/`
+    `Built ${picks.length} job pick page(s), ${poolJobs.length} active pool job(s), ${issuePageJobs.length} job detail page(s), and ${CHANNELS.length} channel(s) into dist/`
   );
 }
 
@@ -1567,13 +1367,13 @@ if (require.main === module) main();
 
 module.exports = {
   CHANNELS,
-  buildPoolJobs,
+  buildIssuePageJobs,
   buildPublicChannels,
   buildPublicIssues,
   buildPublicJobs,
   isPublicCuratedJob,
   matchesChannel,
-  normalizeJobUrl,
+  picksFromIssues,
   poolCutoffDate,
   publicJobFromCurated,
   readRecruiting,
