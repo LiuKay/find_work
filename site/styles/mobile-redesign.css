@@ -3416,6 +3416,65 @@ body.filter-panel-open {
   }
 }
 
+/* Desktop workspace: use the extra width for comparison, not empty canvas. */
+@media (min-width: 1024px) {
+  .desktop-site-header,
+  .mobile-home,
+  .pool-page,
+  .archive-page,
+  .me-layout,
+  .site-footer {
+    width: min(calc(100% - 64px), 1240px);
+  }
+
+  .pool-page,
+  .archive-page {
+    max-width: none;
+  }
+
+  .mobile-home {
+    grid-template-columns: minmax(400px, 0.92fr) minmax(480px, 1.08fr);
+    gap: 24px;
+  }
+
+  .mobile-job-list {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+
+  .latest-job-section .mobile-job-card-note {
+    display: -webkit-box;
+    width: 100%;
+    margin-top: 9px;
+    overflow: hidden;
+    color: var(--prototype-muted);
+    font-size: 12px;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .latest-job-section .mobile-job-card time {
+    display: block;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 9px;
+    color: var(--prototype-muted);
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .full-archive-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1180px) {
+  .job-results {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   button,
   a {
