@@ -821,6 +821,7 @@ function renderPickPage(pick, poolJobs = [], issue = null) {
     canonicalPath: `/picks/${pick.slug}/`,
     activeTab: "archive",
     pageKind: "pick",
+    scripts: ["/assets/pick-cards.js"],
     body: `<main class="pick-list-page" id="main-content">
   <nav class="pick-list-topbar" aria-label="期次操作">
     <a href="/archive/" aria-label="返回归档">${appIcon("nav-arrow-left")}</a>
@@ -828,8 +829,13 @@ function renderPickPage(pick, poolJobs = [], issue = null) {
     <button type="button" data-share-page data-share-title="${escapeHtml(pick.title)}" aria-label="分享本期精选">${appIcon("share-ios")}</button>
   </nav>
   <header class="pick-list-heading">
-    <h1>${escapeHtml(pick.title.replace(/^\d{4}-\d{2}-\d{2}\s*/, ""))}</h1>
-    <p>本期 ${issueJobs.length} 个岗位 · 每日更新</p>
+    <div>
+      <h1>${escapeHtml(pick.title.replace(/^\d{4}-\d{2}-\d{2}\s*/, ""))}</h1>
+      <p>本期 ${issueJobs.length} 个岗位 · 每日更新</p>
+    </div>
+    <button type="button" class="pick-card-download" data-download-pick-cards data-pick-date="${escapeHtml(pick.date)}" aria-label="下载当日岗位卡片">
+      ${appIcon("download")}
+    </button>
   </header>
   <nav class="pick-direction-tabs" aria-label="按岗位方向筛选">
     <button type="button" data-pick-filter="" aria-pressed="true">全部 <span>${issueJobs.length}</span></button>
@@ -1328,7 +1334,7 @@ function copyAssets(recruiting = []) {
     path.join(DIST_DIR, "assets", "mobile-redesign.css")
   );
   fs.copyFileSync(path.join(SITE_DIR, "archive.js"), path.join(DIST_DIR, "assets", "archive.js"));
-  for (const script of ["app.js", "storage.js", "bookmarks.js", "recent.js", "archive-list.js"]) {
+  for (const script of ["app.js", "storage.js", "bookmarks.js", "recent.js", "archive-list.js", "pick-cards.js"]) {
     fs.copyFileSync(path.join(SITE_DIR, "js", script), path.join(DIST_DIR, "assets", script));
   }
   fs.copyFileSync(path.join(SITE_DIR, "remote-work-hero.jpg"), path.join(DIST_DIR, "assets", "remote-work-hero.jpg"));

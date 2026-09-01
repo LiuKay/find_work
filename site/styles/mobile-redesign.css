@@ -1052,7 +1052,8 @@ textarea:focus-visible {
     box-shadow: 0 2px 5px rgba(18, 48, 26, 0.13), 0 10px 25px rgba(18, 48, 26, 0.06);
   }
 
-  .bookmark-button:hover {
+  .bookmark-button:hover,
+  .pick-card-download:hover {
     background: var(--color-brand-soft);
   }
 
@@ -1257,6 +1258,7 @@ textarea:focus-visible {
   .mobile-job-card a,
   .bookmark-button,
   .job-direct-link,
+  .pick-card-download,
   .detail-icon-button,
   .home-search button,
   .quick-filter-grid a,
@@ -1306,7 +1308,15 @@ textarea:focus-visible {
 }
 
 .pick-list-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   padding: 10px 4px 14px;
+}
+
+.pick-list-heading > div {
+  min-width: 0;
 }
 
 .pick-list-heading h1 {
@@ -1322,6 +1332,29 @@ textarea:focus-visible {
   margin: 0;
   color: var(--prototype-muted);
   font-size: 15px;
+}
+
+.pick-card-download {
+  flex: 0 0 auto;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  margin-top: 2px;
+  padding: 0;
+  color: var(--prototype-ink);
+  background: oklch(99% 0.004 255);
+  border: 1px solid oklch(89% 0.012 255);
+  border-radius: var(--prototype-radius-sm);
+}
+
+.pick-card-download .app-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.pick-card-download[aria-busy="true"] {
+  opacity: 0.55;
 }
 
 .pick-direction-tabs {

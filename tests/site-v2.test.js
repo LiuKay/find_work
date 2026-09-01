@@ -171,6 +171,8 @@ for (const file of [
   "assets/storage.js",
   "assets/bookmarks.js",
   "assets/recent.js",
+  "assets/pick-cards.js",
+  "assets/icons/download.svg",
   "assets/jobs.json",
   "assets/filter-options.json",
   "assets/issues.json",
@@ -233,7 +235,14 @@ assert.match(samplePickPage, /data-pick-filter="" aria-pressed="true"/);
 assert.equal((samplePickPage.match(/class="pick-job-card"/g) || []).length, sampleIssue.job_ids.length);
 for (const jobId of sampleIssue.job_ids) assert.match(samplePickPage, new RegExp(`href="/jobs/${jobId}/"`));
 assert.equal((samplePickPage.match(/class="job-direct-link"/g) || []).length, sampleIssue.job_ids.length);
+assert.match(samplePickPage, /data-download-pick-cards/);
+assert.match(samplePickPage, /src="\/assets\/pick-cards\.js"/);
 for (const text of ["申请门槛", "适合谁", "注意事项", "时差判断"]) assert.match(samplePickPage, new RegExp(text));
+
+const pickCardsScript = fs.readFileSync(path.join(ROOT, "site", "js", "pick-cards.js"), "utf8");
+assert.match(pickCardsScript, /const WIDTH = 390/);
+assert.match(pickCardsScript, /const HEIGHT = 844/);
+assert.match(pickCardsScript, /function zipStore/);
 
 const statusById = new Map(curated.map((job) => [job.job_id, job.status]));
 const historicalIssue = issues.find((issue) => issue.job_ids.some((jobId) => statusById.get(jobId) !== "active"));
