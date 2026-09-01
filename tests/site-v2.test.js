@@ -9,6 +9,8 @@ const {
   buildPublicChannels,
   buildPublicIssues,
   buildPublicJobs,
+  jobsInPoolWindow,
+  issuesInPoolWindow,
   matchesChannel,
   readRecruiting,
   renderRecruiting,
@@ -27,10 +29,14 @@ const issues = fs
   .filter((file) => file.endsWith(".json"))
   .map((file) => JSON.parse(fs.readFileSync(path.join(ROOT, "data", "issues", file), "utf8")));
 
-const publicJobs = buildPublicJobs(curated, issues);
-const issuePageJobs = buildIssuePageJobs(curated, issues);
-const publicIssues = buildPublicIssues(issues, publicJobs);
-const publicChannels = buildPublicChannels(publicJobs, "2026-08-05");
+const asOfDate = "2026-08-05";
+const publicJobs = jobsInPoolWindow(buildPublicJobs(curated, issues), asOfDate);
+const publicIssues = issuesInPoolWindow(buildPublicIssues(issues, publicJobs), asOfDate);
+const issuePageJobs = buildIssuePageJobs(
+  curated,
+  issues.filter((issue) => publicIssues.some((publicIssue) => publicIssue.issue_id === issue.issue_id))
+);
+const publicChannels = buildPublicChannels(publicJobs, asOfDate);
 const publicIds = new Set(publicJobs.map((job) => job.id));
 const expectedPublicIds = new Set(
   curated
@@ -53,7 +59,9 @@ const expectedPublicIds = new Set(
         ].every((field) => String(job[field] || "").trim()) &&
         Array.isArray(job.featured_issue_ids) &&
         job.featured_issue_ids.length > 0 &&
-        /^j_[a-f0-9]{12,}$/.test(job.job_id)
+        /^j_[a-f0-9]{12,}$/.test(job.job_id) &&
+        job.last_featured_date >= "2026-07-23" &&
+        job.last_featured_date <= asOfDate
     )
     .map((job) => job.job_id)
 );
@@ -78,8 +86,10 @@ for (const [channelId, payload] of Object.entries(surveyCases)) {
   assert.ok(recommendSurveyChannels(payload).includes(channelId), `survey mapping missing ${channelId}`);
 }
 assert.ok(publicJobs.length > 0);
-assert.ok(issuePageJobs.some((job) => !publicIds.has(job.id)));
-assert.ok(issues.every((issue) => issue.job_ids.every((jobId) => issuePageJobs.some((job) => job.id === jobId))));
+assert.ok(publicJobs.every((job) => job.lastFeaturedDate >= "2026-07-23" && job.lastFeaturedDate <= "2026-08-05"));
+assert.ok(publicIssues.every((issue) => issue.date >= "2026-07-23" && issue.date <= "2026-08-05"));
+
+assert.ok(publicIssues.every((issue) => issue.job_ids.every((jobId) => issuePageJobs.some((job) => job.id === jobId))));
 assert.ok(publicJobs.every((job) => job.detailUrl === `/jobs/${job.id}/`));
 assert.ok(publicJobs.every((job) => job.chinaApplicabilityNote && job.applicationBarrierNote));
 assert.equal(new Set(publicJobs.map((job) => job.detailUrl)).size, publicJobs.length);
@@ -245,9 +255,11 @@ assert.match(pickCardsScript, /const HEIGHT = 844/);
 assert.match(pickCardsScript, /function zipStore/);
 
 const statusById = new Map(curated.map((job) => [job.job_id, job.status]));
-const historicalIssue = issues.find((issue) => issue.job_ids.some((jobId) => statusById.get(jobId) !== "active"));
-const historicalPickPage = fs.readFileSync(path.join(ROOT, "dist", "picks", historicalIssue.issue_id, "index.html"), "utf8");
-assert.equal((historicalPickPage.match(/class="pick-job-card"/g) || []).length, historicalIssue.job_ids.length);
+const historicalIssue = publicIssues.find((issue) => issue.job_ids.some((jobId) => statusById.get(jobId) !== "active"));
+if (historicalIssue) {
+  const historicalPickPage = fs.readFileSync(path.join(ROOT, "dist", "picks", historicalIssue.issue_id, "index.html"), "utf8");
+  assert.equal((historicalPickPage.match(/class="pick-job-card"/g) || []).length, historicalIssue.job_ids.length);
+}
 
 const jobPageDirectories = fs
   .readdirSync(path.join(ROOT, "dist", "jobs"), { withFileTypes: true })
@@ -293,8 +305,9 @@ execFileSync(process.execPath, ["scripts/build-site.js"], {
   stdio: "pipe",
 });
 const nextDayHome = fs.readFileSync(path.join(ROOT, "dist", "index.html"), "utf8");
-const nextDayLatestDate = publicIssues.find((issue) => issue.date <= "2026-08-06").date;
-const nextDayIssue = publicIssues.find((issue) => issue.date === nextDayLatestDate);
+const nextDayIssues = issuesInPoolWindow(buildPublicIssues(issues, jobsInPoolWindow(buildPublicJobs(curated, issues), "2026-08-06")), "2026-08-06");
+const nextDayLatestDate = nextDayIssues.find((issue) => issue.date <= "2026-08-06").date;
+const nextDayIssue = nextDayIssues.find((issue) => issue.date === nextDayLatestDate);
 assert.match(nextDayHome, new RegExp(`datetime="${nextDayLatestDate}"`));
 assert.deepEqual(
   Array.from(nextDayHome.matchAll(/data-job-id="(j_[a-f0-9]{12})"/g), (match) => match[1]),

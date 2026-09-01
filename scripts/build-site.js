@@ -476,6 +476,18 @@ function buildPublicIssues(issues, publicJobs) {
     .sort((a, b) => b.date.localeCompare(a.date) || b.issue_id.localeCompare(a.issue_id));
 }
 
+function inPoolWindow(dateValue, asOfDate) {
+  return Boolean(dateValue) && dateValue >= poolCutoffDate(asOfDate) && dateValue <= asOfDate;
+}
+
+function jobsInPoolWindow(jobs, asOfDate) {
+  return jobs.filter((job) => inPoolWindow(job.lastFeaturedDate, asOfDate));
+}
+
+function issuesInPoolWindow(issues, asOfDate) {
+  return issues.filter((issue) => inPoolWindow(issue.date, asOfDate));
+}
+
 function buildPublicChannels(publicJobs, asOfDate) {
   return CHANNELS.map((channel) => {
     const jobs = publicJobs.filter((job) => matchesChannel(job, channel.id));
@@ -1363,10 +1375,14 @@ function main() {
   }
   const curatedJobs = readNdjson(CURATED_FILE);
   const issues = readIssues();
-  const poolJobs = buildPublicJobs(curatedJobs, issues);
-  const issuePageJobs = buildIssuePageJobs(curatedJobs, issues);
-  const publicIssues = buildPublicIssues(issues, poolJobs);
-  const picks = picksFromIssues(issues);
+  const poolJobs = jobsInPoolWindow(buildPublicJobs(curatedJobs, issues), asOfDate);
+  const publicIssues = issuesInPoolWindow(buildPublicIssues(issues, poolJobs), asOfDate);
+  const picks = issuesInPoolWindow(picksFromIssues(issues), asOfDate);
+  const visibleIssueIds = new Set(picks.map((pick) => pick.slug));
+  const issuePageJobs = buildIssuePageJobs(
+    curatedJobs,
+    issues.filter((issue) => visibleIssueIds.has(issue.issue_id))
+  );
   const publicChannels = buildPublicChannels(poolJobs, asOfDate);
   const pages = [
     ["index.html", renderIndex(picks, poolJobs, publicIssues, publicChannels, asOfDate)],
@@ -1383,7 +1399,7 @@ function main() {
     ]),
     ...picks.map((pick) => [
       path.join("picks", pick.slug, "index.html"),
-      renderPickPage(pick, issuePageJobs, issues.find((issue) => issue.issue_id === pick.slug)),
+      renderPickPage(pick, issuePageJobs, publicIssues.find((issue) => issue.issue_id === pick.slug)),
     ]),
     ...issuePageJobs.map((job) => [path.join("jobs", job.id, "index.html"), renderJobPage(job)]),
   ];
@@ -1426,6 +1442,8 @@ module.exports = {
   matchesChannel,
   picksFromIssues,
   poolCutoffDate,
+  jobsInPoolWindow,
+  issuesInPoolWindow,
   publicJobFromCurated,
   readRecruiting,
   renderJobCard,
