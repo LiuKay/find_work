@@ -232,7 +232,8 @@ assert.match(samplePickPage, /class="pick-list-page"/);
 assert.match(samplePickPage, /data-pick-filter="" aria-pressed="true"/);
 assert.equal((samplePickPage.match(/class="pick-job-card"/g) || []).length, sampleIssue.job_ids.length);
 for (const jobId of sampleIssue.job_ids) assert.match(samplePickPage, new RegExp(`href="/jobs/${jobId}/"`));
-assert.doesNotMatch(samplePickPage, /class="job-direct-link"/);
+assert.equal((samplePickPage.match(/class="job-direct-link"/g) || []).length, sampleIssue.job_ids.length);
+for (const text of ["申请门槛", "适合谁", "注意事项", "时差判断"]) assert.match(samplePickPage, new RegExp(text));
 
 const statusById = new Map(curated.map((job) => [job.job_id, job.status]));
 const historicalIssue = issues.find((issue) => issue.job_ids.some((jobId) => statusById.get(jobId) !== "active"));

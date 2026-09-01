@@ -407,6 +407,7 @@ function publicJobFromCurated(job, issueById) {
     issueUrl: issueSlug ? `/picks/${issueSlug}/` : "/archive/",
     title: job.title || "",
     company: job.company || "",
+    companyPlatform: job.company_platform || job.company || "",
     direction: job.job_direction || "",
     workMode: job.work_mode || "",
     experience: job.experience || "",
@@ -776,29 +777,37 @@ function writePage(relativePath, html) {
 
 function renderPickJobCard(job, index) {
   const confidence = confidencePresentation(job.chinaApplicability);
-  const tags = [job.direction, job.workMode, job.language, job.experience]
-    .filter(Boolean)
-    .map((tag) => `<span>${escapeHtml(tag)}</span>`)
-    .join("");
+  const detailSections = [
+    ["申请门槛", job.applicationBarrierNote],
+    ["适合谁", job.fit],
+    ["注意事项", job.notes],
+    ["时差判断", job.timezone],
+  ];
   return `<article class="pick-job-card" data-job-card data-job-id="${escapeHtml(job.id)}" data-pick-direction="${escapeHtml(job.direction)}">
-    <span class="pick-job-index" aria-hidden="true">${String(index + 1).padStart(2, "0")}</span>
-    <button class="bookmark-button" type="button" data-bookmark-job="${escapeHtml(job.id)}" aria-label="收藏 ${escapeHtml(job.title)}" aria-pressed="false">${appIcon("bookmark", "bookmark-icon")}</button>
-    <a href="${escapeHtml(job.detailUrl)}" aria-label="查看 ${escapeHtml(job.title)} 的岗位详情">
-      <span class="company-initial" aria-hidden="true">${escapeHtml(companyInitial(job.company))}</span>
-      <span class="pick-job-content">
-        <strong>${escapeHtml(job.title)}</strong>
-        <span class="pick-job-company">${escapeHtml(job.company)} ${appIcon("check-circle")}</span>
-        <span class="pick-job-tags">${tags}</span>
-        <span class="pick-job-note">${escapeHtml(job.fit)}</span>
-        <span class="pick-job-meta">
-          <span class="${confidence.className}">${appIcon("stats-up-square")}${confidence.label}</span>
-          <span>${appIcon("shield-check")}申请门槛 ${escapeHtml(job.applicationBarrier)}</span>
-          <span>${appIcon("clock")}时差见详情</span>
-          <time datetime="${escapeHtml(job.updatedAt)}">本期更新</time>
+    <header class="pick-job-card-header">
+      <div class="pick-job-card-topline">
+        <span class="pick-job-index">岗位 ${String(index + 1).padStart(2, "0")}</span>
+        <span class="pick-job-actions">
+          <button class="bookmark-button" type="button" data-bookmark-job="${escapeHtml(job.id)}" aria-label="收藏 ${escapeHtml(job.title)}" aria-pressed="false">${appIcon("bookmark", "bookmark-icon")}</button>
+          <a class="job-direct-link" href="${escapeHtml(job.link)}" target="_blank" rel="noopener noreferrer">查看原岗位</a>
         </span>
-      </span>
-      ${appIcon("nav-arrow-right", "pick-job-arrow")}
-    </a>
+      </div>
+      <h2><a href="${escapeHtml(job.detailUrl)}">${escapeHtml(job.title)}</a></h2>
+      <p>${escapeHtml(job.companyPlatform)}</p>
+    </header>
+    <div class="pick-job-facts" aria-label="岗位基本信息">
+      <span>${escapeHtml(job.direction)}</span>
+      <span>${escapeHtml(job.workMode)}</span>
+      <span>${escapeHtml(job.experience)}</span>
+      <span>${escapeHtml(job.language)}</span>
+    </div>
+    <div class="pick-job-confidence ${confidence.className}">
+      <strong>可投把握 ${escapeHtml(job.chinaApplicability)}</strong>
+      <span>· ${escapeHtml(job.chinaApplicabilityNote)}</span>
+    </div>
+    <div class="pick-job-details">
+      ${detailSections.map(([title, content]) => `<section><h3>${title}</h3><p>${escapeHtml(content || "岗位页面未披露")}</p></section>`).join("")}
+    </div>
   </article>`;
 }
 
