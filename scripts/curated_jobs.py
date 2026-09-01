@@ -406,6 +406,9 @@ def merge_occurrence(existing: dict[str, Any], incoming: dict[str, Any]) -> dict
                 "close_reason",
             } and value not in (None, "", []):
                 merged[key] = value
+        if incoming.get("publication_status") == "未披露":
+            merged["publication_status"] = "未披露"
+            merged["published_date"] = ""
     merged["first_seen_date"] = min(existing["first_seen_date"], incoming["first_seen_date"])
     merged["last_featured_date"] = max(existing["last_featured_date"], incoming["last_featured_date"])
     merged["featured_issue_ids"] = sorted(

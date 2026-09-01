@@ -16,7 +16,7 @@ data/curated/jobs.ndjson           一行一岗的唯一权威库存
                                                /pool/
                                                /channels/<id>/
 
-job-picks/<完整期次 slug>.md        继续作为社群可读的每日精选笔记
+job-picks/<完整期次 slug>.md        仅作为社群可读的导出物，不参与网站构建
 ```
 
 公开构建只接受 `status=active` 且 `title`、`company`、`url`、
@@ -36,6 +36,22 @@ npm run dev
 构建会生成 `/pool/`、6 个画像频道以及 `jobs.json`、`issues.json`、
 `channels.json`。所有日期边界使用 `Asia/Shanghai`；需要复现历史构建时
 可临时设置 `POOL_AS_OF_DATE=YYYY-MM-DD`。
+
+## 每日自动岗位精选
+
+`.github/workflows/daily-job-picks.yml` 每天北京时间 08:15 运行，也可以手动触发。
+默认使用 OpenAI Responses API；要切换到 OpenAI-compatible Chat Completions 服务商，
+在 GitHub repository variables 设置：
+
+```text
+OPENAI_BASE_URL=https://api.deepseek.com
+OPENAI_API_MODE=chat_completions
+OPENAI_MODEL=<服务商提供的模型名>
+```
+
+API key 仍放在 repository secret `OPENAI_API_KEY`，值可以是 DeepSeek 或其他兼容服务商的 key。
+`responses` 模式提供 OpenAI `web_search` 和严格 JSON Schema；`chat_completions` 模式使用通用
+JSON object，本地仍会执行字段、去重、坏链和报告校验，但不会注入 OpenAI 专属的 `web_search` 工具。
 
 ## Curated CLI
 

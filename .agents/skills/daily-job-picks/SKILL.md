@@ -1,6 +1,7 @@
 ---
 name: daily-job-picks
 description: Find and curate daily high-quality foreign-company China roles and overseas remote roles for China-based applicants, including public multi-category daily roundups and targeted searches for a specific role profile. Use when the user asks for daily job picks, China-applicable foreign company jobs, APAC/Asia remote jobs, overseas remote jobs compatible with China time zones, group-friendly job newsletters, curated job leads with deduplication by date, or parallel multi-agent job-search workflows.
+argument-hint: "[page|feishu]"
 ---
 
 # Daily Job Picks
@@ -58,10 +59,27 @@ Use bundled scripts for deterministic bookkeeping and output. Run them from the 
 
 These scripts do not decide whether a job is good or China-applicable. The agent still owns source search, JD interpretation, risk judgment, time-zone judgment, and final selection.
 
+## Search Tool Policy
+
+- Use the model's built-in web search and page-opening tools as the default discovery path. For ordinary public job research, search enabled source lanes, then open the employer or ATS job page directly.
+- Do not invoke `agent-reach` merely because the task involves internet or job search. It is an optional fallback router, not part of the default pipeline and not evidence that a job is valid.
+- Use `agent-reach` only when the task specifically needs a platform or backend that built-in web access cannot cover well, such as LinkedIn login-backed search, Reddit, X/Twitter, XiaoHongShu, Bilibili, or another configured channel; also use it when normal web search cannot reach a necessary source and Agent Reach has a relevant fallback.
+- When `agent-reach` is used, record which platform/backend is needed and use only its fetched results for candidate discovery. Finalists must still resolve to a public employer or ATS detail page and pass the same local dedupe, screening, extraction, and link-validation steps.
+- For public company career pages and ATS sources such as Ashby, Greenhouse, Lever, Workable, and SmartRecruiters, prefer built-in web search/open plus the bundled `ats_extract.py` and `link_check.py` scripts. Agent Reach adds no required step here.
+
 ## Modes
 
 - Public roundup mode: Use when the user asks for a daily selection for friends, a group, a newsletter, or people from multiple industries. Cover several job directions so readers can self-pick.
 - Targeted mode: Use when the user specifies a role, industry, seniority, or personal profile. Optimize for that request instead of broad coverage.
+
+## Publish Targets
+
+- `page` is the default and preserves the current behavior: write Markdown, candidates, curated inventory, issue metadata, and seen-jobs bookkeeping.
+- `feishu` performs the full `page` workflow, then synchronizes the same accepted jobs to Base `VVcQbo0ryaxs1Is31aJc7l0inRh`, table `tblGhxK2Khzv8cbO`, using `岗位 ID` as the business key.
+- When no target is specified, use `page` for backward compatibility.
+- Feishu records must be written only with `lark-cli base +...` shortcuts. Query by `岗位 ID` before writing; create missing records and update existing records by `record_id` so retries are idempotent.
+- If a same-date page already exists and the requested target is `feishu`, reuse that date's issue and curated inventory for synchronization instead of searching again.
+- Use `--as user` by default. Automation may set `DAILY_JOB_PICKS_FEISHU_IDENTITY=bot` only after the bot has been granted edit access to the target Base; never store app secrets in the repository.
 
 ## Workflow
 
@@ -83,7 +101,7 @@ These scripts do not decide whether a job is good or China-applicable. The agent
    - Apply `excluded_companies` and `excluded_domains` from the resolved plan before spending review time on candidates.
 8. Run `scripts/seen_jobs.py ensure` and `scripts/bad_links.py ensure`, then run `scripts/seen_jobs.py snapshot --format json` plus `scripts/bad_links.py snapshot`. Keep a compact dedupe and bad-link snapshot for this run.
 9. If subagents are available and the requested search is broad, use the dispatcher workflow in `references/multi-agent-workflow.md`: the main agent assigns distinct source/category lanes to child agents, then owns deduplication, final screening, writing, and final link validation. If subagents are unavailable or the request is narrow, run the same lanes sequentially.
-10. Search live job sources. Because job listings change frequently, always browse the web for current listings. Use enabled TOML source groups as the search lanes and do not use disabled source groups.
+10. Search live job sources with the model's built-in web search/open tools by default. Because job listings change frequently, always browse for current listings, use enabled TOML source groups as the search lanes, and open promising employer or ATS detail pages directly. Do not load or invoke `agent-reach` for this normal path. Use it only under the fallback conditions in **Search Tool Policy**.
 11. Build a candidate pool larger than the requested count. Record every discovery with `candidate_id`, `discovered_at`, `pipeline_status`, and any `screen_reason` in `data/candidates/YYYY-MM-DD.ndjson`; validate the complete NDJSON, write a temporary sibling file, then atomically replace the date file. For each promising candidate, run `scripts/seen_jobs.py check --title ... --company ... --url ...` and `scripts/bad_links.py check --title ... --company ... --url ...`; remove duplicates and previously reported bad links before spending more review time.
 12. Reject jobs that fail the hard rules:
    - Overseas jobs must be remote.
@@ -94,10 +112,11 @@ These scripts do not decide whether a job is good or China-applicable. The agent
 13. Apply TOML `screening_rules`, project-level audience preferences, and `link_rules` as practical screening inputs, but never use them to weaken the hard rules above.
 14. For Greenhouse, Lever, Ashby, Workable, SmartRecruiters, and company career URLs, run `scripts/ats_extract.py <url>` when shell network access is available. Use extracted title/company/location as a consistency check; if it disagrees with the candidate, open the page and resolve the mismatch before proceeding.
 15. **MANDATORY link check — do not skip, do not proceed to step 16 until complete.** Run `scripts/link_check.py --url <url> --title <title> --company <company>` for every finalist URL one by one. Any URL that returns `"ok_basic": false`, an HTTP error, a bad-page marker, missing selected-role details, or no reader-visible application path must be dropped and replaced before continuing. After the script passes, also open each finalist URL directly and run the final reader-usability pass from `references/search-and-screening.md`; replace or reject any job whose link cannot be verified. For SmartRecruiters and similar ATS pages, do not trust stale page titles, cached snippets, or metadata alone: the currently opened page must show the selected job title, company, job description, and an apply/interested action to a normal reader. Record every dropped link via `scripts/bad_links.py append` before searching for a replacement. This verification is internal; do not include a `链接核验` field or mention scraping, crawling, rendering, parser behavior, ATS quirks, or verification mechanics in the public output.
-16. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 15 may appear here.
+16. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 15 may appear here. Record the actual page publication date as `published_date` (`YYYY-MM-DD`) with `publication_status=已披露`; if the page does not disclose it, use an empty string with `publication_status=未披露`.
 17. Run `scripts/format_daily_picks.py --input <final-jobs.json> --date <date> --mode <mode> --output <report.md> --curated-output data/curated/jobs.ndjson --issues-dir data/issues` to validate fields, render Markdown, upsert the reviewed inventory, and write the full-slug issue in one command. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Use `--issue-id` only when the output filename is not the intended full issue slug. Fix any validation errors before writing final output.
 18. Save or append the rendered Markdown to the appropriate file, then run `scripts/validate_report.py <report.md> --check-links` whenever shell network access is available. Fix validation errors before responding. If the result includes `bad_link_candidates`, record each failed URL with `scripts/bad_links.py append` before replacing it. If shell network is unavailable, run `scripts/link_check.py` on every final URL separately as soon as access is available; do not rely on Markdown-only validation.
-19. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. The TSV helper writes the same stable `job_id` used by curated while continuing to read legacy six-column files. Also provide the same content in the response unless the user only asked to save it.
+19. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. The TSV helper writes the same stable `job_id` used by curated while continuing to read legacy six-column files.
+20. When the publish target is `feishu`, load this issue's jobs from `data/curated/jobs.ndjson`, validate the live Base fields and select options, then synchronize them with `lark-cli`. Do not parse the Markdown back into fields. Read back every synchronized `岗位 ID` and report created, updated, and verified counts. Also provide the same content in the response unless the user only asked to save it.
 
 If the user reports a broken, closed, login-gated, paywalled, wrong-job, or unavailable link from a previous report, run `scripts/bad_links.py append --date ... --url ... --title ... --company ... --reason ...` before finding a replacement. Treat that report as decisive for future public usefulness.
 
@@ -122,7 +141,7 @@ Output style rules:
 - If eligibility or employment structure is unclear, describe only the applicant-facing uncertainty, such as `投递前确认是否支持中国大陆远程签约、税务和合同形式`.
 - Infer `岗位方向` from the job title and JD responsibilities, not just from broad skill defaults. Use `其他` only when no more specific label fits after reading the JD.
 - Write `申请门槛` using only the `application_barrier_note` text in applicant-facing wording, for example `申请门槛：需要基础客服或 SaaS 支持经验，但不是重资历岗`. Do not render `低 / 中 / 高` in final Markdown or user-facing responses.
-- Write `中国可投把握` as `高 / 中 / 待确认 + 一句简短说明` so readers know the evidence behind the judgment, for example `中国可投把握：高，岗位直接面向中国团队或中国本地招聘`.
+- Write `中国可投把握` as a `canonical taxonomy` value plus one short explanation so readers know the evidence behind the judgment, for example `中国可投把握：高，岗位直接面向中国团队或中国本地招聘`.
 
 Top-level title rules:
 
@@ -141,12 +160,11 @@ Top-level title rules:
 ### 1. 岗位名称：
 公司 / 平台：
 岗位归类：外企中国岗位 / 外企 APAC 岗位 / 海外远程岗位 / 中国可投待确认
-岗位方向：技术、测试与质量 / 数据与 AI / 产品与项目 / 技术支持与解决方案 / 运营与客户服务 / 销售与商务 / 市场、内容与本地化 / 供应链 / 人力资源 / 法务、合规与风控 / 教育与培训 / 其他
-工作方式：中国本地办公 / 中国远程 / 混合办公 / APAC 远程 / 全球远程 / 中国可投待确认
-经验要求：经验不限 / 入门 / 1-3 年 / 3-5 年 / 高级 / 不明确
-语言要求：中文 / 英文 / 双语 / 其他 / 不明确
+岗位方向、工作方式、经验、语言、申请门槛和中国可投把握必须使用运行时注入的 `canonical taxonomy`，不要自行创造新值。
+经验要求：使用 `canonical taxonomy` 中的值
+语言要求：使用 `canonical taxonomy` 中的值
 申请门槛：直接使用 application_barrier_note 的一句简短说明
-中国可投把握：高 / 中 / 待确认 + 一句简短说明
+中国可投把握：使用 `canonical taxonomy` 中的值 + 一句简短说明
 时差判断：
 适合谁：
 注意事项：
@@ -194,9 +212,12 @@ Before rendering Markdown, create a temporary JSON file containing the final job
     "best_for": "适合英语较好、有客服或 SaaS 支持经验的人",
     "notes": "投递前确认是否支持中国大陆远程签约、税务和合同形式",
     "url": "https://example.com/jobs/123",
-    "source": "Greenhouse"
+    "source": "Greenhouse",
+    "published_date": "2026-08-10",
+    "publication_status": "已披露"
   }
 ]
 ```
 
 `company` and `source` are used for `seen_jobs.py append`; the rendered Markdown uses `company_platform`. `application_barrier` and `china_applicability` keep normalized internal labels for screening and tie-break decisions. In rendered Markdown, `申请门槛` must use only `application_barrier_note`, while `中国可投把握` continues to render the base label plus `china_applicability_note`.
+`published_date` and `publication_status` are internal fields used by curated inventory and Feishu sync; they do not change the Markdown layout. When the page does not disclose a publication date, write `"published_date":""` and `"publication_status":"未披露"`.
