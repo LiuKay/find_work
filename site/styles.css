@@ -1170,8 +1170,28 @@ time {
   margin: 18px 0 16px;
 }
 
+.markdown-image-wide a {
+  display: inline-block;
+  width: min(376px, 100%);
+  border-radius: var(--radius-md);
+  touch-action: manipulation;
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), opacity 180ms ease-out;
+}
+
+.markdown-image-wide a:active {
+  transform: scale(0.985);
+}
+
 .markdown-image-wide img {
-  width: min(360px, 100%);
+  width: 100%;
+  outline: 1px solid rgba(77, 64, 43, 0.1);
+  outline-offset: -1px;
+}
+
+@media (hover: hover) {
+  .markdown-image-wide a:hover {
+    transform: translateY(-4px);
+  }
 }
 
 .archive-layout {

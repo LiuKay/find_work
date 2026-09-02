@@ -1361,6 +1361,10 @@ function copyAssets(recruiting = []) {
   fs.copyFileSync(path.join(SITE_DIR, "wechat_qr.jpg"), path.join(DIST_DIR, "assets", "wechat_qr.jpg"));
   fs.copyFileSync(path.join(SITE_DIR, "xiaohongshu_qr.jpg"), path.join(DIST_DIR, "assets", "xiaohongshu_qr.jpg"));
   fs.copyFileSync(path.join(SITE_DIR, "xiaohongshu_standard.jpg"), path.join(DIST_DIR, "assets", "xiaohongshu_standard.jpg"));
+  fs.copyFileSync(
+    path.join(SITE_DIR, "xiaohongshu_job_library.png"),
+    path.join(DIST_DIR, "assets", "xiaohongshu_job_library.png")
+  );
   for (const image of new Set(recruiting.map((item) => item.image).filter(Boolean))) {
     const fileName = path.basename(image);
     fs.copyFileSync(path.join(SITE_DIR, fileName), path.join(DIST_DIR, "assets", fileName));

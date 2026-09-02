@@ -174,8 +174,10 @@ for (const file of [
   "index.html",
   "pool/index.html",
   "me/index.html",
+  "about/index.html",
   "recruiting/index.html",
   "assets/recruiting-originwise.png",
+  "assets/xiaohongshu_job_library.png",
   "assets/mobile-redesign.css",
   "assets/app.js",
   "assets/storage.js",
@@ -292,6 +294,10 @@ assert.match(poolPage, /data-filter-toggle/);
 const archivePage = fs.readFileSync(path.join(ROOT, "dist", "archive", "index.html"), "utf8");
 assert.match(archivePage, /class="archive-segments"/);
 assert.match(archivePage, /data-archive-search/);
+const aboutPage = fs.readFileSync(path.join(ROOT, "dist", "about", "index.html"), "utf8");
+assert.match(aboutPage, /src="\/assets\/xiaohongshu_job_library\.png"/);
+assert.match(aboutPage, /href="https:\/\/xhslink\.com\/m\/5IFlg0skb0b"/);
+assert.match(aboutPage, /rel="noopener noreferrer" target="_blank"/);
 for (const asset of ["home-simple.svg", "search.svg", "bookmark.svg", "filter.svg"]) {
   assert.ok(fs.existsSync(path.join(ROOT, "dist", "assets", "icons", asset)), `missing icon asset: ${asset}`);
 }

@@ -21,6 +21,12 @@ Find Work 是一个面向中国申请者的岗位筛选网站。它把外企、A
 
 [![岗位筛选标准](/assets/xiaohongshu_standard.jpg)](https://xhslink.cn/o/1AG1f4Z7Rl5)
 
+## 岗位汇总持续更新
+
+外企、远程岗位汇总会持续整理在飞书多维表格。
+
+[![小红书岗位库：2026-2027 外企和远程岗位信息汇总](/assets/xiaohongshu_job_library.png)](https://xhslink.com/m/5IFlg0skb0b)
+
 ## 适合谁
 
 这个网站更适合这些朋友：
