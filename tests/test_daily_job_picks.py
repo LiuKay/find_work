@@ -307,6 +307,13 @@ class DailyJobPicksTests(unittest.TestCase):
             "2026-07-03 00:00:00",
         )
 
+    def test_feishu_link_uses_raw_url_when_url_contains_parentheses(self) -> None:
+        job = reviewed_job()
+        job["url"] = "https://example.com/jobs/customer-success-(china)"
+        self.assertEqual(runner.feishu_fields(job)["链接"], job["url"])
+        readback = f"[{job['url']}]({job['url']})"
+        self.assertEqual(runner.normalize_feishu_readback("链接", readback), job["url"])
+
     def test_feishu_update_clears_undisclosed_publication_date(self) -> None:
         job = reviewed_job()
         job.update(

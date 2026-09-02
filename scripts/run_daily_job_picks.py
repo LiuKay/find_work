@@ -903,7 +903,7 @@ def feishu_fields(job: dict[str, Any], *, include_empty: bool = False) -> dict[s
         "审核状态": job.get("review_state"),
         "申请门槛": job.get("application_barrier_note"),
         "时差判断": job.get("timezone_judgment"),
-        "链接": f"[直达链接]({job['url']})",
+        "链接": job["url"],
         "工作方式": job.get("work_mode"),
         "适合谁": job.get("best_for"),
         "岗位方向": job.get("job_direction"),
@@ -932,6 +932,8 @@ def normalize_feishu_readback(field_name: str, value: Any) -> Any:
     """Match Base's single-select read shape to the scalar write shape."""
     if field_name in FEISHU_SELECT_FIELDS and isinstance(value, list) and len(value) == 1:
         return value[0]
+    if field_name == "链接" and isinstance(value, str) and value.startswith("[") and "](" in value and value.endswith(")"):
+        return value.split("](", 1)[1][:-1]
     if field_name in {"发布日期", "收录日期"} and isinstance(value, str) and "T" in value:
         return f"{value.split('T', 1)[0]} 00:00:00"
     return value
