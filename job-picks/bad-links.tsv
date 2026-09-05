@@ -413,3 +413,8 @@ date	url	title	company	reason	replacement_url	job_id
 2026-09-04	https://jobs.ashbyhq.com/deel/07706d90-d267-4438-847b-c6de2dc0db62	Solutions Engineer - Deel Field Services	Deel	公开页面未展示具体岗位标题与公司详情		j_bb1313e84def
 2026-09-04	https://jobs.ashbyhq.com/semgrep/6d99c53a-86a0-4ffe-a4fa-d9d92bea8716	Senior Solutions Engineer - Enterprise (APAC)	Semgrep	公开页面未展示具体岗位标题与公司详情		j_71441a460ce9
 2026-09-04	https://jobs.lever.co/snowplow/e209cf38-0d85-43a8-b8f4-5837ceade3af	Technical Support Manager	Snowplow Analytics	HTTP 404，岗位页面已不可用		j_1fed2ad11933
+2026-09-05	https://www.freightos.com/position/F1.E61	Customer Success Specialist APAC	Freightos	link_check detected bad-page marker		j_3e501822054e
+2026-09-05	https://job-boards.greenhouse.io/pfm/jobs/5778135004	Clinical Research Associate	Precision for Medicine	岗位链接重定向到职位列表错误页		j_42f2a59ff69e
+2026-09-05	https://careers.sumsub.com/jobs/7437610-technical-support-engineer-l2	Technical Support Engineer (L2)	Sumsub	link_check detected bad-page marker		j_bd381eb013da
+2026-09-05	https://careers.sumsub.com/jobs/8213299-junior-customer-success-manager	Junior Customer Success Manager	Sumsub	link_check detected bad-page marker		j_cddb78a7b111
+2026-09-05	https://careers.sumsub.com/jobs/8217924-sales-operations-specialist	Sales Operations Specialist	Sumsub	link_check detected bad-page marker		j_8602f525c526
