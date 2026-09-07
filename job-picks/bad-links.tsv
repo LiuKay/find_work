@@ -418,3 +418,7 @@ date	url	title	company	reason	replacement_url	job_id
 2026-09-05	https://careers.sumsub.com/jobs/7437610-technical-support-engineer-l2	Technical Support Engineer (L2)	Sumsub	link_check detected bad-page marker		j_bd381eb013da
 2026-09-05	https://careers.sumsub.com/jobs/8213299-junior-customer-success-manager	Junior Customer Success Manager	Sumsub	link_check detected bad-page marker		j_cddb78a7b111
 2026-09-05	https://careers.sumsub.com/jobs/8217924-sales-operations-specialist	Sales Operations Specialist	Sumsub	link_check detected bad-page marker		j_8602f525c526
+2026-09-07	https://jobs.lever.co/weloglobal/b4779eb4-c07e-4015-90a4-b63dbb7521b1	Alpheratz Project - Chinese (China) Translation Quality Rater	Welocalize	岗位详情页返回 HTTP 404		j_dd42da8bac90
+2026-09-07	https://jobs.workable.com/view/jNcNBoHYyk18eCSQsQSk4S/remote-data-engineer---web-scraping-%284-months-contract%29-in-taiwan-at-cxg	Data Engineer - Web Scraping (4 months contract)	CXG	岗位详情页返回 HTTP 410		j_631e8aef6d36
+2026-09-07	https://job-boards.greenhouse.io/pfm/jobs/5832090004	Senior Clinical Data Manager	Precision for Medicine	岗位链接跳转至招聘列表错误页，详情已不可用		j_1eead9176e79
+2026-09-07	https://jobs.ashbyhq.com/bjakcareer/d3757b11-576f-40c0-b103-104e3afefe71	Lead, Strategy & Operations, China	Bjak	岗位链接仅返回通用职位页，无法核验岗位正文		j_fd22f20b0530
