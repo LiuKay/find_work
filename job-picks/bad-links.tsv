@@ -422,3 +422,7 @@ date	url	title	company	reason	replacement_url	job_id
 2026-09-07	https://jobs.workable.com/view/jNcNBoHYyk18eCSQsQSk4S/remote-data-engineer---web-scraping-%284-months-contract%29-in-taiwan-at-cxg	Data Engineer - Web Scraping (4 months contract)	CXG	岗位详情页返回 HTTP 410		j_631e8aef6d36
 2026-09-07	https://job-boards.greenhouse.io/pfm/jobs/5832090004	Senior Clinical Data Manager	Precision for Medicine	岗位链接跳转至招聘列表错误页，详情已不可用		j_1eead9176e79
 2026-09-07	https://jobs.ashbyhq.com/bjakcareer/d3757b11-576f-40c0-b103-104e3afefe71	Lead, Strategy & Operations, China	Bjak	岗位链接仅返回通用职位页，无法核验岗位正文		j_fd22f20b0530
+2026-09-08	https://job-boards.greenhouse.io/usconec/jobs/4052760009	Applications Engineer	US Conec	direct role URL redirects to company jobs list and no longer shows the selected role		j_eddce235504b
+2026-09-08	https://careers.yodo1.com/jobs/8059727-sales-operations-manager-china	Sales Operations Manager - China	Yodo1	basic URL check flagged a login marker		j_5f44a01ba7c4
+2026-09-08	https://job-boards.greenhouse.io/casetify/jobs/5993026004	QA Engineer - Shenzhen	CASETiFY	direct role URL redirects to company jobs list and no longer shows the selected role		j_9247f8a79a70
+2026-09-08	https://jobs.smartrecruiters.com/WesternDigital/744000130439520-specialist-3-customer-operations	Specialist 3, Customer Operations	Western Digital	job page marked expired		j_55473fdf56f8
