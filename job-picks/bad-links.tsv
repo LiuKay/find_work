@@ -426,3 +426,12 @@ date	url	title	company	reason	replacement_url	job_id
 2026-09-08	https://careers.yodo1.com/jobs/8059727-sales-operations-manager-china	Sales Operations Manager - China	Yodo1	basic URL check flagged a login marker		j_5f44a01ba7c4
 2026-09-08	https://job-boards.greenhouse.io/casetify/jobs/5993026004	QA Engineer - Shenzhen	CASETiFY	direct role URL redirects to company jobs list and no longer shows the selected role		j_9247f8a79a70
 2026-09-08	https://jobs.smartrecruiters.com/WesternDigital/744000130439520-specialist-3-customer-operations	Specialist 3, Customer Operations	Western Digital	job page marked expired		j_55473fdf56f8
+2026-09-09	https://roche.wd3.myworkdayjobs.com/zh-CN/roche-ext/job/AI-Product-Manager_202606-116972-1	AI Product Manager	Roche	基础检查无法确认岗位标题、公司及读者可用申请详情		j_b510f4c0a663
+2026-09-09	https://jobs.ashbyhq.com/deel/af020930-1d38-472c-a412-e06073875ad2	Enablement Manager, Revenue	Deel	基础检查无法确认岗位标题与公司		j_9b4872208385
+2026-09-09	https://jobs.ashbyhq.com/bjakcareer/30e61c93-89e3-48e7-b72b-646ec764a78a	Business Operations Manager (Strategic Projects)	BJAK	基础检查无法确认岗位标题与公司		j_ad3a260900c7
+2026-09-09	https://jobs.ashbyhq.com/bjakcareer/94d87fd3-d553-4a29-b3af-5716ac847bbf	Lead, Executive Operations	BJAK	基础检查无法确认岗位标题与公司		j_f5eaca50e6ad
+2026-09-09	https://jobs.ashbyhq.com/synthesia/bd9ba8f0-b87b-4a3a-bca9-6496afc776f2	Field Marketing Manager, APAC	Synthesia	基础检查无法确认岗位标题与公司		j_c5fd95ff8a9d
+2026-09-09	https://jobs.ashbyhq.com/elevenlabs/6c9008dc-06fb-41fd-a5e1-8896c7baa482	Events Lead – APAC	ElevenLabs	基础检查无法确认岗位标题与公司		j_26c5df589cf0
+2026-09-09	https://jobs.workable.com/view/sLNfoRx6Rtvr7XRJ8i65YK/remote---senior-manager---devops%2Fplatform-engineering-in-china-at-makro-pro	Remote - Senior Manager - DevOps/Platform Engineering	Makro PRO	HTTP 410，岗位不可用		j_385fba99f8bc
+2026-09-09	https://jobs.workable.com/view/hYeqodgHEa2FGjjqur6Hhy/remote-head-of-supply-chain%2C-dtc-health-%26-wellness-in-shenzhen-at-hyprwork	Head of Supply Chain, DTC Health & Wellness	Hyprwork	HTTP 410，岗位不可用		j_aa42ea61a057
+2026-09-09	https://jobs.workable.com/view/5JAw5ucvj6Sxm4v3xjxeRZ/remote-marketing-manager---china-in-shanghai-at-peoplecert	Marketing Manager - China	PEOPLECERT	HTTP 410，岗位不可用		j_9cb902db907a
