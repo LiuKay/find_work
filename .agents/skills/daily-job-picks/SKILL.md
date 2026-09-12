@@ -1,7 +1,7 @@
 ---
 name: daily-job-picks
 description: Find and curate daily high-quality foreign-company China roles and overseas remote roles for China-based applicants, including public multi-category daily roundups and targeted searches for a specific role profile. Use when the user asks for daily job picks, China-applicable foreign company jobs, APAC/Asia remote jobs, overseas remote jobs compatible with China time zones, group-friendly job newsletters, curated job leads with deduplication by date, or parallel multi-agent job-search workflows.
-argument-hint: "[page|feishu]"
+argument-hint: "[page|feishu] [count] [page-count]"
 ---
 
 # Daily Job Picks
@@ -34,7 +34,7 @@ Do not assume a personal default job profile. In targeted mode, the user must pr
 - Always read and validate `sources/job-search-config.toml` before searching.
 - Use `scripts/validate_source_config.py` to validate the TOML source. Stop and report the configuration errors if validation fails.
 - Configuration precedence is: user input for the current run > project-level audience preferences in `/Users/kaybee/Documents/github/find_work/config/job-picks-audience-preferences.md` > `sources/job-search-config.toml` > non-negotiable safety constraints in this `SKILL.md`.
-- User input may override target roles, industry, seniority, language constraints, excluded industries, and count for the current run. Do not write those temporary overrides back to the TOML file unless the user explicitly asks to update the source.
+- User input may override target roles, industry, seniority, language constraints, excluded industries, count, and site page count for the current run. Do not write those temporary overrides back to the TOML file unless the user explicitly asks to update the source.
 - Project-level audience preferences may override public roundup emphasis, target count, role-direction priority, work-mode priority, English-level tendency, seniority tendency, and applicant-barrier tendency. They must not override hard safety rules, link rules, bad-link exclusions, or explicit company/domain exclusions.
 - Public roundup mode must use enabled `role_profiles` from the TOML source for coverage. Do not require every profile every day; use them to build the candidate pool and keep quality high.
 - Targeted mode must first try to match the user's requested role/industry against enabled `role_profiles` by `id`, `label`, `keywords`, or `directions`. If no profile matches, use the user's words as temporary role keywords for that run.
@@ -77,6 +77,8 @@ These scripts do not decide whether a job is good or China-applicable. The agent
 - `page` is the default and preserves the current behavior: write Markdown, candidates, curated inventory, issue metadata, and seen-jobs bookkeeping.
 - `feishu` performs the full `page` workflow, then synchronizes the same accepted jobs to Base `VVcQbo0ryaxs1Is31aJc7l0inRh`, table `tblGhxK2Khzv8cbO`, using `岗位 ID` as the business key.
 - When no target is specified, use `page` for backward compatibility.
+- The website is a subset of Feishu. Write every accepted job to `job_ids` and sync all of them to Feishu. Write at most 10 of those jobs to `public_job_ids` for the site. If the user does not give a site count, default to 10 or the accepted count, whichever is smaller.
+- The site only shows the latest 14 days. Each of those days publishes at most 10 jobs. Issues older than 14 days stay in Feishu and local inventory, but are not built into the site. Unlabeled historical issues still cap at 10 for the site; do not backfill them.
 - Feishu records must be written only with `lark-cli base +...` shortcuts. Query by `岗位 ID` before writing; create missing records and update existing records by `record_id` so retries are idempotent.
 - If a same-date page already exists and the requested target is `feishu`, reuse that date's issue and curated inventory for synchronization instead of searching again.
 - Use `--as user` by default. Automation may set `DAILY_JOB_PICKS_FEISHU_IDENTITY=bot` only after the bot has been granted edit access to the target Base; never store app secrets in the repository.
@@ -88,14 +90,14 @@ These scripts do not decide whether a job is good or China-applicable. The agent
 3. Run `scripts/validate_source_config.py --summary`. If it fails, stop before searching and report the TOML configuration errors.
 4. Load `sources/job-search-config.toml` and parse enabled `source_groups`, enabled `role_profiles`, `screening_rules`, `link_rules`, and `output_defaults`. Also load `references/search-and-screening.md` only as explanatory reference for edge cases.
 5. If `/Users/kaybee/Documents/github/find_work/config/job-picks-audience-preferences.md` exists, read it before resolving public roundup search emphasis:
-   - Use `本期总数` as the preferred public roundup target unless the user gives a count.
+   - Use `本期总数` as the preferred public roundup target unless the user gives a count. A separate site count may be smaller; it never exceeds 10 and never exceeds the accepted Feishu count.
    - Use `岗位方向优先级` to decide which role families get more search effort and finalist slots.
    - Use `工作方式优先级`, `英文要求倾向`, `经验阶段倾向`, and `申请门槛倾向` as tie-breakers when choosing between otherwise similar jobs.
    - Use `明确排除` as project-specific screening guidance, but never as permission to weaken hard rules.
    - Keep the file human-facing; do not require TOML/YAML syntax from the user.
-6. Parse the user's current parameters: role, industry, seniority, skill constraints, language requirements, excluded industries, requested count, and whether broad public coverage is desired.
+6. Parse the user's current parameters: role, industry, seniority, skill constraints, language requirements, excluded industries, requested count, optional site page count, and whether broad public coverage is desired.
 7. Run `scripts/resolve_search_plan.py --mode ... --role ... --industry ...` to resolve the search plan from user input plus TOML:
-   - Public roundup mode: use enabled TOML role profiles as the coverage pool and use TOML count defaults unless the user specified a count.
+   - Public roundup mode: use enabled TOML role profiles as the coverage pool and use TOML count defaults unless the user specified a count. Keep the site subset in `public_job_ids`; do not shrink Feishu to the site count.
    - Targeted mode: match user input to enabled TOML role profiles. If no profile matches, use the user input as temporary keywords for this run.
    - Build search queries from enabled TOML source groups and their `search_templates`, replacing `{role}` with role/profile keywords.
    - Apply `excluded_companies` and `excluded_domains` from the resolved plan before spending review time on candidates.
@@ -113,7 +115,7 @@ These scripts do not decide whether a job is good or China-applicable. The agent
 14. For Greenhouse, Lever, Ashby, Workable, SmartRecruiters, and company career URLs, run `scripts/ats_extract.py <url>` when shell network access is available. Use extracted title/company/location as a consistency check; if it disagrees with the candidate, open the page and resolve the mismatch before proceeding.
 15. **MANDATORY link check — do not skip, do not proceed to step 16 until complete.** Run `scripts/link_check.py --url <url> --title <title> --company <company>` for every finalist URL one by one. Any URL that returns `"ok_basic": false`, an HTTP error, a bad-page marker, missing selected-role details, or no reader-visible application path must be dropped and replaced before continuing. After the script passes, also open each finalist URL directly and run the final reader-usability pass from `references/search-and-screening.md`; replace or reject any job whose link cannot be verified. For SmartRecruiters and similar ATS pages, do not trust stale page titles, cached snippets, or metadata alone: the currently opened page must show the selected job title, company, job description, and an apply/interested action to a normal reader. Record every dropped link via `scripts/bad_links.py append` before searching for a replacement. This verification is internal; do not include a `链接核验` field or mention scraping, crawling, rendering, parser behavior, ATS quirks, or verification mechanics in the public output.
 16. Classify and summarize each selected job into the structured JSON schema below. Only jobs that passed step 15 may appear here. Record the actual page publication date as `published_date` (`YYYY-MM-DD`) with `publication_status=已披露`; if the page does not disclose it, use an empty string with `publication_status=未披露`.
-17. Run `scripts/format_daily_picks.py --input <final-jobs.json> --date <date> --mode <mode> --output <report.md> --curated-output data/curated/jobs.ndjson --issues-dir data/issues` to validate fields, render Markdown, upsert the reviewed inventory, and write the full-slug issue in one command. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Use `--issue-id` only when the output filename is not the intended full issue slug. Fix any validation errors before writing final output.
+17. Run `scripts/format_daily_picks.py --input <final-jobs.json> --date <date> --mode <mode> --output <report.md> --curated-output data/curated/jobs.ndjson --issues-dir data/issues --page-count <site-count>` to validate fields, render Markdown, upsert the reviewed inventory, and write the full-slug issue in one command. Pass every accepted job in the JSON input so Feishu and Markdown keep the full set. `--page-count` writes the site subset to `public_job_ids` and must be at most 10. For targeted runs, pass `--mode 定向精选 --target "<用户请求的目标岗位/方向>"`; the renderer will automatically produce a `岗位专选` title unless `--title` is provided. Use `--issue-id` only when the output filename is not the intended full issue slug. Fix any validation errors before writing final output.
 18. Save or append the rendered Markdown to the appropriate file, then run `scripts/validate_report.py <report.md> --check-links` whenever shell network access is available. Fix validation errors before responding. If the result includes `bad_link_candidates`, record each failed URL with `scripts/bad_links.py append` before replacing it. If shell network is unavailable, run `scripts/link_check.py` on every final URL separately as soon as access is available; do not rely on Markdown-only validation.
 19. For each accepted job, run `scripts/seen_jobs.py append --date ... --title ... --company ... --url ... --job-direction ... --source ...`. The TSV helper writes the same stable `job_id` used by curated while continuing to read legacy six-column files.
 20. When the publish target is `feishu`, load this issue's jobs from `data/curated/jobs.ndjson`, validate the live Base fields and select options, then synchronize them with `lark-cli`. Do not parse the Markdown back into fields. Read back every synchronized `岗位 ID` and report created, updated, and verified counts. Also provide the same content in the response unless the user only asked to save it.
@@ -122,7 +124,7 @@ If the user reports a broken, closed, login-gated, paywalled, wrong-job, or unav
 
 ## Quality Bar
 
-Prefer 6-10 strong jobs for public roundup mode and 5-8 strong jobs for targeted mode. Return fewer if not enough high-quality, current, non-duplicate jobs meet all rules. Do not pad with weak matches.
+Prefer the user-requested count for Feishu, defaulting to 6-10 strong jobs for public roundup mode and 5-8 for targeted mode. The site may take a smaller subset, at most 10 jobs from that same day's Feishu list. Return fewer if not enough high-quality, current, non-duplicate jobs meet all rules. Do not pad with weak matches.
 
 Use direct evidence from the job page for location, remote status, company, time-zone feasibility, role requirements, and application path. If a field is unclear but the role is otherwise promising, label it as `中国可投待确认` and state what the applicant should confirm, using applicant-facing wording such as `投递前确认中国大陆雇佣/合同形式`. Do not expose internal collection or verification details such as `抓取`, `爬取`, `结构化字段`, `无登录环境`, `页面渲染`, `ATS`, `解析`, `检索结果`, or `不同环境显示不完全`.
 

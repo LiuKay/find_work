@@ -28,6 +28,7 @@ DEFAULT_CANDIDATES = ROOT / "data" / "candidates"
 TAXONOMY_PATH = ROOT / "data" / "schema" / "job-taxonomy.json"
 PUBLIC_REQUIRED = ("title", "company", "url", "china_applicability", "application_barrier", "best_for")
 STATUSES = {"active", "expired", "closed"}
+PAGE_JOB_LIMIT = 10
 TRANSIENT_OUTCOMES = {"failure", "network_error", "http_403", "rate_limited", "timeout", "suspect"}
 EXPLICIT_CLOSED_OUTCOMES = {"closed", "gone", "expired_page", "not_found"}
 
@@ -356,6 +357,14 @@ def public_complete(job: dict[str, Any]) -> bool:
     return all(str(job.get(field, "")).strip() for field in PUBLIC_REQUIRED)
 
 
+def public_job_ids_for(job_ids: list[str], page_count: int | None = None) -> list[str]:
+    unique = list(dict.fromkeys(str(job_id) for job_id in job_ids if str(job_id).strip()))
+    limit = PAGE_JOB_LIMIT if page_count is None else page_count
+    if not isinstance(limit, int) or limit < 0 or limit > PAGE_JOB_LIMIT:
+        raise ValueError(f"page_count must be between 0 and {PAGE_JOB_LIMIT}")
+    return unique[:limit]
+
+
 def occurrence_from_raw(raw: dict[str, Any], issue_id: str, issue_date: str) -> dict[str, Any]:
     job = dict(raw)
     job["title"] = plain_text(job.get("title"))
@@ -597,6 +606,14 @@ def migrate(picks_dir: Path, as_of: str, output: Path, issues_dir: Path) -> tupl
                 },
             }
         )
+        existing_issue_path = issues_dir / f"{issue_id}.json"
+        if existing_issue_path.exists():
+            existing_issue = json.loads(existing_issue_path.read_text(encoding="utf-8"))
+            if isinstance(existing_issue, dict) and "public_job_ids" in existing_issue:
+                allowed = set(issue_job_ids)
+                issues[-1]["public_job_ids"] = [
+                    job_id for job_id in existing_issue.get("public_job_ids") or [] if job_id in allowed
+                ][:PAGE_JOB_LIMIT]
 
     known_bad = bad_link_urls(picks_dir)
     for job in jobs_by_id.values():
@@ -681,6 +698,17 @@ def check_inventory(output: Path, issues_dir: Path) -> dict[str, int]:
     }
     if missing:
         raise ValueError(f"issues reference missing job_ids: {sorted(missing)}")
+    for issue in issues:
+        public_job_ids = issue.get("public_job_ids")
+        if public_job_ids is None:
+            continue
+        if not isinstance(public_job_ids, list) or any(not isinstance(job_id, str) or not job_id for job_id in public_job_ids):
+            raise ValueError(f"{issue['issue_id']}: public_job_ids must be a list of job ids")
+        extra = [job_id for job_id in public_job_ids if job_id not in set(issue.get("job_ids") or [])]
+        if extra:
+            raise ValueError(f"{issue['issue_id']}: public_job_ids not in job_ids: {extra}")
+        if len(public_job_ids) > PAGE_JOB_LIMIT:
+            raise ValueError(f"{issue['issue_id']}: public_job_ids exceed {PAGE_JOB_LIMIT}")
     return {"jobs": len(jobs), "issues": len(issues), "active": sum(job["status"] == "active" for job in jobs)}
 
 
@@ -722,6 +750,7 @@ def upsert(
     output: Path,
     issues_dir: Path,
     reopen_closed: bool = False,
+    page_count: int | None = None,
 ) -> tuple[int, list[str]]:
     parse_date(day)
     validate_issue_id(issue_id, day)
@@ -764,6 +793,15 @@ def upsert(
     combined_job_ids = list(
         dict.fromkeys([*(existing_issue.get("job_ids") or []), *issue_job_ids])
     )
+    # ponytail: leave legacy issues unlabeled; the site caps unlabeled days at 10 and hides anything older than 14 days.
+    if existing_issue and "public_job_ids" not in existing_issue:
+        public_job_ids = None
+    elif "public_job_ids" in existing_issue:
+        existing_public = [job_id for job_id in existing_issue.get("public_job_ids") or [] if job_id in combined_job_ids]
+        incoming_public = public_job_ids_for(issue_job_ids, page_count)
+        public_job_ids = list(dict.fromkeys([*existing_public, *incoming_public]))[:PAGE_JOB_LIMIT]
+    else:
+        public_job_ids = public_job_ids_for(combined_job_ids, page_count)
     issue = {
         "issue_id": issue_id,
         "title": issue_title,
@@ -781,6 +819,8 @@ def upsert(
             ),
         },
     }
+    if public_job_ids is not None:
+        issue["public_job_ids"] = public_job_ids
     atomic_write_json(issues_dir / f"{issue_id}.json", issue)
     return len(raw_jobs), issue["job_ids"]
 
@@ -921,6 +961,7 @@ def build_parser() -> argparse.ArgumentParser:
     upsert_parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     upsert_parser.add_argument("--issues-dir", type=Path, default=DEFAULT_ISSUES)
     upsert_parser.add_argument("--reopen-closed", action="store_true")
+    upsert_parser.add_argument("--page-count", type=int, default=None)
 
     verify_parser = sub.add_parser("verify", help="apply explicit link verification results")
     verify_parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
@@ -961,6 +1002,7 @@ def main() -> int:
                 args.output,
                 args.issues_dir,
                 args.reopen_closed,
+                args.page_count,
             )
             result = {"upserted": count, "job_ids": job_ids}
         elif args.command == "verify":

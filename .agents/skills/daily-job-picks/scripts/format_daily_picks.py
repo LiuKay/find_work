@@ -168,6 +168,7 @@ def main() -> int:
     parser.add_argument("--curated-output", type=Path, help="also upsert the reviewed inventory")
     parser.add_argument("--issues-dir", type=Path, default=PROJECT_ROOT / "data" / "issues")
     parser.add_argument("--issue-id", default="", help="full issue slug; defaults to the Markdown filename")
+    parser.add_argument("--page-count", type=int, default=None, help="how many accepted jobs to publish on the site")
     args = parser.parse_args()
 
     jobs = load_jobs(args.input)
@@ -201,6 +202,8 @@ def main() -> int:
             "--issues-dir",
             str(args.issues_dir),
         ]
+        if args.page_count is not None:
+            command.extend(["--page-count", str(args.page_count)])
         result = subprocess.run(command, text=True, capture_output=True, check=False)
         if result.returncode:
             print(result.stdout or result.stderr)

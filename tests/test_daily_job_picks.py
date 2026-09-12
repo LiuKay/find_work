@@ -247,6 +247,19 @@ class DailyJobPicksTests(unittest.TestCase):
         with mock.patch.object(sys, "argv", ["run_daily_job_picks.py", "feishu"]):
             self.assertEqual(runner.parse_args().publish_target, "feishu")
 
+    def test_count_and_page_count_are_optional_overrides(self) -> None:
+        with mock.patch.object(sys, "argv", ["run_daily_job_picks.py"]):
+            args = runner.parse_args()
+            self.assertEqual(args.count, 8)
+            self.assertEqual(args.page_count, 10)
+        with mock.patch.object(
+            sys, "argv", ["run_daily_job_picks.py", "feishu", "--count", "20", "--page-count", "10"]
+        ):
+            args = runner.parse_args()
+            self.assertEqual(args.publish_target, "feishu")
+            self.assertEqual(args.count, 20)
+            self.assertEqual(args.page_count, 10)
+
     def test_undisclosed_publication_date_is_valid(self) -> None:
         job = reviewed_job()
         job["published_date"] = ""

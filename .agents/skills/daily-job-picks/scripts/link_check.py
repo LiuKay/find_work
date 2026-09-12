@@ -34,10 +34,13 @@ BAD_PAGE_PATTERNS = [
     "sorry, this job has expired",
     "this job has expired",
     "access denied",
-    "sign in",
-    "log in",
+    "please sign in",
+    "please log in",
+    "sign in to continue",
+    "log in to continue",
+    "you must sign in",
+    "you must log in",
     "subscribe",
-    "captcha",
 ]
 
 APPLY_PATTERNS = [

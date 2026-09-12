@@ -12,6 +12,7 @@ const SITE_DIR = path.join(ROOT, "site");
 const TURNSTILE_SITE_KEY = process.env.TURNSTILE_SITE_KEY || "";
 const ASSET_VERSION = process.env.CF_PAGES_COMMIT_SHA || "local";
 const POOL_DAYS = 14;
+const PAGE_JOB_LIMIT = 10;
 const TAXONOMY = JSON.parse(fs.readFileSync(TAXONOMY_FILE, "utf8"));
 const FILTER_FIELD_MAP = {
   direction: "job_direction",
@@ -314,6 +315,19 @@ function isDisplayableCuratedJob(job) {
   }
 }
 
+function issuePublicJobIds(issue) {
+  // ponytail: unlabeled issues still cap at 10; older than 14 days are dropped by the pool window.
+  const jobIds = Array.isArray(issue?.job_ids) ? issue.job_ids.filter(Boolean) : [];
+  const publicJobIds = Array.isArray(issue?.public_job_ids) ? issue.public_job_ids.filter(Boolean) : null;
+  const allowed = new Set(jobIds);
+  const selected = publicJobIds == null ? jobIds : publicJobIds.filter((jobId) => allowed.has(jobId));
+  return selected.slice(0, PAGE_JOB_LIMIT);
+}
+
+function publicJobIdsFromIssues(issues) {
+  return new Set(issues.flatMap((issue) => issuePublicJobIds(issue)));
+}
+
 function validateActiveJobDetails(curatedJobs) {
   const activeJobs = curatedJobs.filter((job) => job && job.status === "active");
   const invalid = activeJobs.filter((job) => !isPublicCuratedJob(job));
@@ -373,7 +387,8 @@ function validateActiveJobDetails(curatedJobs) {
 
 function publicJobFromCurated(job, issueById) {
   const featuredIssueSlugs = Array.isArray(job.featured_issue_ids) ? job.featured_issue_ids : [];
-  const issueSlug = featuredIssueSlugs[featuredIssueSlugs.length - 1] || "";
+  const visibleSlugs = featuredIssueSlugs.filter((slug) => issueById.has(slug));
+  const issueSlug = visibleSlugs[visibleSlugs.length - 1] || featuredIssueSlugs[featuredIssueSlugs.length - 1] || "";
   const issue = issueById.get(issueSlug) || {};
   const searchText = [
     job.last_featured_date,
@@ -401,10 +416,10 @@ function publicJobFromCurated(job, issueById) {
     updatedAt: job.last_featured_date || "",
     firstSeenDate: job.first_seen_date || "",
     lastFeaturedDate: job.last_featured_date || "",
-    featuredIssueSlugs,
+    featuredIssueSlugs: visibleSlugs.length ? visibleSlugs : featuredIssueSlugs,
     issueSlug,
     issueTitle: issue.title || issueSlug,
-    issueUrl: issueSlug ? `/picks/${issueSlug}/` : "/archive/",
+    issueUrl: issueById.has(issueSlug) ? `/picks/${issueSlug}/` : "/archive/",
     title: job.title || "",
     company: job.company || "",
     companyPlatform: job.company_platform || job.company || "",
@@ -429,7 +444,7 @@ function publicJobFromCurated(job, issueById) {
 }
 
 function buildIssuePageJobs(curatedJobs, issues) {
-  const referencedIds = new Set(issues.flatMap((issue) => issue.job_ids || []));
+  const referencedIds = publicJobIdsFromIssues(issues);
   const issueById = new Map(issues.map((issue) => [issue.issue_id, issue]));
   return curatedJobs
     .filter((job) => referencedIds.has(job.job_id) && isDisplayableCuratedJob(job))
@@ -439,9 +454,10 @@ function buildIssuePageJobs(curatedJobs, issues) {
 function buildPublicJobs(curatedJobs, issues) {
   validateActiveJobDetails(curatedJobs);
   const issueById = new Map(issues.map((issue) => [issue.issue_id, issue]));
+  const publicJobIds = publicJobIdsFromIssues(issues);
   const applicabilityRank = { 高: 3, 中: 2, 待确认: 1, 低: 0, 不明确: 0 };
   return curatedJobs
-    .filter(isPublicCuratedJob)
+    .filter((job) => publicJobIds.has(job.job_id) && isPublicCuratedJob(job))
     .map((job) => publicJobFromCurated(job, issueById))
     .sort(
       (a, b) =>
@@ -460,7 +476,7 @@ function buildPublicIssues(issues, publicJobs) {
   const publicById = new Map(publicJobs.map((job) => [job.id, job]));
   return issues
     .map((issue) => {
-      const jobIds = (issue.job_ids || []).filter((jobId) => publicIds.has(jobId));
+      const jobIds = issuePublicJobIds(issue).filter((jobId) => publicIds.has(jobId));
       return {
         issue_id: issue.issue_id,
         title: issue.title,
@@ -1379,14 +1395,11 @@ function main() {
   }
   const curatedJobs = readNdjson(CURATED_FILE);
   const issues = readIssues();
-  const poolJobs = jobsInPoolWindow(buildPublicJobs(curatedJobs, issues), asOfDate);
-  const publicIssues = issuesInPoolWindow(buildPublicIssues(issues, poolJobs), asOfDate);
-  const picks = issuesInPoolWindow(picksFromIssues(issues), asOfDate);
-  const visibleIssueIds = new Set(picks.map((pick) => pick.slug));
-  const issuePageJobs = buildIssuePageJobs(
-    curatedJobs,
-    issues.filter((issue) => visibleIssueIds.has(issue.issue_id))
-  );
+  const windowIssues = issuesInPoolWindow(issues, asOfDate);
+  const poolJobs = jobsInPoolWindow(buildPublicJobs(curatedJobs, windowIssues), asOfDate);
+  const publicIssues = buildPublicIssues(windowIssues, poolJobs);
+  const picks = picksFromIssues(windowIssues);
+  const issuePageJobs = buildIssuePageJobs(curatedJobs, windowIssues);
   const publicChannels = buildPublicChannels(poolJobs, asOfDate);
   const pages = [
     ["index.html", renderIndex(picks, poolJobs, publicIssues, publicChannels, asOfDate)],
@@ -1442,6 +1455,7 @@ module.exports = {
   buildPublicChannels,
   buildPublicIssues,
   buildPublicJobs,
+  issuePublicJobIds,
   isPublicCuratedJob,
   matchesChannel,
   picksFromIssues,

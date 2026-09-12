@@ -268,6 +268,70 @@ class CuratedJobsTests(unittest.TestCase):
             self.assertEqual(len(issue["job_ids"]), 2)
             self.assertEqual(issue["stats"]["count"], 2)
 
+    def test_upsert_keeps_full_issue_and_site_subset(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            output = root / "jobs.ndjson"
+            issues = root / "issues"
+            jobs = [
+                reviewed_job(title=f"Role {index}", url=f"https://example.com/jobs/{index}")
+                for index in range(1, 13)
+            ]
+            input_path = root / "final.json"
+            input_path.write_text(json.dumps(jobs, ensure_ascii=False), encoding="utf-8")
+            curated.upsert(
+                input_path,
+                "2026-09-12",
+                "2026-09-12",
+                "Twelve",
+                "public",
+                output,
+                issues,
+                page_count=10,
+            )
+            issue = json.loads((issues / "2026-09-12.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(issue["job_ids"]), 12)
+            self.assertEqual(issue["public_job_ids"], issue["job_ids"][:10])
+            self.assertEqual(issue["stats"]["count"], 12)
+
+    def test_upsert_does_not_backfill_legacy_issues(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            output = root / "jobs.ndjson"
+            issues = root / "issues"
+            issues.mkdir()
+            first = reviewed_job()
+            input_path = root / "final.json"
+            input_path.write_text(json.dumps([first], ensure_ascii=False), encoding="utf-8")
+            curated.upsert(
+                input_path,
+                "2026-09-01",
+                "2026-09-01",
+                "Legacy",
+                "public",
+                output,
+                issues,
+            )
+            issue_path = issues / "2026-09-01.json"
+            issue = json.loads(issue_path.read_text(encoding="utf-8"))
+            issue.pop("public_job_ids", None)
+            issue_path.write_text(json.dumps(issue, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            extra = reviewed_job(title="Role 2", url="https://example.com/jobs/2")
+            input_path.write_text(json.dumps([extra], ensure_ascii=False), encoding="utf-8")
+            curated.upsert(
+                input_path,
+                "2026-09-01",
+                "2026-09-01",
+                "Legacy",
+                "public",
+                output,
+                issues,
+                page_count=1,
+            )
+            updated = json.loads(issue_path.read_text(encoding="utf-8"))
+            self.assertEqual(len(updated["job_ids"]), 2)
+            self.assertNotIn("public_job_ids", updated)
+
     def test_atomic_replace_failure_preserves_old_inventory(self):
         with tempfile.TemporaryDirectory() as temp:
             output = Path(temp) / "jobs.ndjson"

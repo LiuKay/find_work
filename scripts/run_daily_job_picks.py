@@ -32,6 +32,8 @@ PUBLIC_INDUSTRY = "外企中国岗位 / APAC / 海外远程"
 DEFAULT_MODEL = "gpt-5.2"
 MIN_CANDIDATES = 24
 TARGET_JOBS = 8
+MAX_TARGET_JOBS = 40
+PAGE_JOB_LIMIT = 10
 MAX_REPAIR_PASSES = 2
 MAX_API_RETRIES = 2
 API_TIMEOUT_SECONDS = 120
@@ -172,6 +174,10 @@ def validate_date(value: str) -> str:
     return value
 
 
+def candidate_floor(target_jobs: int) -> int:
+    return min(80, max(MIN_CANDIDATES, target_jobs * 2))
+
+
 def normalize_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip().casefold()
 
@@ -245,7 +251,9 @@ def validate_job(job: Any) -> dict[str, Any]:
     return {**job, "url": url}
 
 
-def validate_model_response(data: Any, *, initial: bool) -> dict[str, Any]:
+def validate_model_response(
+    data: Any, *, initial: bool, min_candidates: int = MIN_CANDIDATES
+) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise PipelineError("model response must be an object")
     candidates = data.get("candidates")
@@ -254,11 +262,11 @@ def validate_model_response(data: Any, *, initial: bool) -> dict[str, Any]:
         raise PipelineError("model response must contain candidates and jobs arrays")
     if initial:
         distinct_candidates = {job_key(candidate) for candidate in candidates}
-        if len(distinct_candidates) < MIN_CANDIDATES:
+        if len(distinct_candidates) < min_candidates:
             raise PipelineError(
-                f"model returned {len(distinct_candidates)} distinct candidates; need at least {MIN_CANDIDATES}"
+                f"model returned {len(distinct_candidates)} distinct candidates; need at least {min_candidates}"
             )
-    if len(candidates) > 60 or len(jobs) > 10:
+    if len(candidates) > 80 or len(jobs) > MAX_TARGET_JOBS:
         raise PipelineError("model returned too many candidates or jobs")
     for candidate in candidates:
         if not isinstance(candidate, dict):
@@ -297,8 +305,8 @@ def structured_schema() -> dict[str, Any]:
         "type": "object",
         "additionalProperties": False,
         "properties": {
-            "candidates": {"type": "array", "items": candidate, "maxItems": 60},
-            "jobs": {"type": "array", "items": job, "maxItems": 10},
+            "candidates": {"type": "array", "items": candidate, "maxItems": 80},
+            "jobs": {"type": "array", "items": job, "maxItems": MAX_TARGET_JOBS},
         },
         "required": ["candidates", "jobs"],
     }
@@ -455,6 +463,8 @@ def build_instruction(
     known_candidates: list[dict[str, Any]] | None = None,
     accepted_jobs: list[dict[str, Any]] | None = None,
     failures: list[dict[str, str]] | None = None,
+    target_jobs: int = TARGET_JOBS,
+    min_candidates: int = MIN_CANDIDATES,
 ) -> str:
     phase = "补搜替代岗位" if repair else "首次搜索和筛选"
     search_requirement = (
@@ -493,7 +503,7 @@ def build_instruction(
 2. 只考虑中国大陆申请人实际可投的中国岗位、APAC 岗位或远程岗位；执行时区、远程、诈骗、高风险行业、AI Trainer/数据标注中国资格等硬规则。
 3. 不要把泛化的中文能力误判为中国大陆可投；不确定时必须写成中国可投待确认，并给申请人确认建议。
 4. 每个最终岗位必须来自你返回的 candidates，且有具体职位 URL、公司、职位描述和申请路径。不要返回平台首页、搜索页、列表页或已关闭职位。
-5. candidates 是内部发现池：首次搜索至少返回 {MIN_CANDIDATES} 条不同候选，包含你认为最终不适合的候选并写明 screen_reason。jobs 是按质量排序的最终候选，公共精选目标是 {TARGET_JOBS} 个，最多 10 个；不要为了凑数降低质量。
+5. candidates 是内部发现池：首次搜索至少返回 {min_candidates} 条不同候选，包含你认为最终不适合的候选并写明 screen_reason。jobs 是按质量排序的最终候选，公共精选目标是 {target_jobs} 个，最多 {MAX_TARGET_JOBS} 个；不要为了凑数降低质量。
 6. 每个最终岗位填写页面实际发布日期 published_date（YYYY-MM-DD）；页面未披露时留空字符串，并把 publication_status 设为“未披露”。
 7. 只返回 JSON，不要 Markdown、解释、链接核验字段、抓取/爬取等内部过程用语。Responses 模式必须符合 JSON Schema；兼容模式必须符合相同字段要求并返回 JSON object。申请门槛和中国可投把握的公开措辞遵守 skill。
 
@@ -1073,11 +1083,23 @@ def sync_feishu(project_root: Path, jobs: list[dict[str, Any]]) -> dict[str, int
 
 
 def run_pipeline(
-    project_root: Path, job_picks_root: Path, run_date: str, publish_target: str = "page"
+    project_root: Path,
+    job_picks_root: Path,
+    run_date: str,
+    publish_target: str = "page",
+    target_jobs: int = TARGET_JOBS,
+    page_count: int | None = None,
 ) -> dict[str, Any]:
     run_date = validate_date(run_date)
     if publish_target not in PUBLISH_TARGETS:
         raise PipelineError(f"publish target must be page or feishu: {publish_target}")
+    if not isinstance(target_jobs, int) or not 1 <= target_jobs <= MAX_TARGET_JOBS:
+        raise PipelineError(f"target_jobs must be between 1 and {MAX_TARGET_JOBS}")
+    resolved_page_count = PAGE_JOB_LIMIT if page_count is None else page_count
+    if not isinstance(resolved_page_count, int) or not 0 <= resolved_page_count <= PAGE_JOB_LIMIT:
+        raise PipelineError(f"page_count must be between 0 and {PAGE_JOB_LIMIT}")
+    resolved_page_count = min(resolved_page_count, target_jobs)
+    min_candidates = candidate_floor(target_jobs)
     report = job_picks_root / f"{run_date}.md"
     if publish_target == "feishu" and report.exists():
         jobs = issue_jobs(project_root, run_date)
@@ -1125,9 +1147,11 @@ def run_pipeline(
         audience_text=audience_text,
         seen_rows=compact_rows(seen_rows, run_date),
         bad_rows=compact_rows(bad_rows, run_date),
+        target_jobs=target_jobs,
+        min_candidates=min_candidates,
     )
     first = call_model(instruction)
-    first = validate_model_response(first, initial=True)
+    first = validate_model_response(first, initial=True, min_candidates=min_candidates)
 
     # ponytail: full history is enforced by local scripts; only recent rows enter the API prompt.
     candidate_records: dict[str, dict[str, Any]] = {}
@@ -1142,7 +1166,7 @@ def run_pipeline(
             add_candidate(candidate, run_date, candidate_records)
         pass_failures: list[dict[str, str]] = []
         for raw_job in response["jobs"]:
-            if len(accepted_jobs) >= TARGET_JOBS:
+            if len(accepted_jobs) >= target_jobs:
                 break
             _, failure = evaluate_job(
                 project_root=project_root,
@@ -1157,11 +1181,11 @@ def run_pipeline(
             if failure:
                 pass_failures.append(failure)
         failures.extend(pass_failures)
-        if accepted_jobs and len(accepted_jobs) >= TARGET_JOBS:
+        if accepted_jobs and len(accepted_jobs) >= target_jobs:
             break
         if pass_index >= MAX_REPAIR_PASSES:
             break
-        missing = TARGET_JOBS - len(accepted_jobs)
+        missing = target_jobs - len(accepted_jobs)
         failures.append({"reason": f"还需要 {missing} 个通过筛选的岗位"})
         response = call_model(
             build_instruction(
@@ -1177,6 +1201,8 @@ def run_pipeline(
                 known_candidates=list(candidate_records.values()),
                 accepted_jobs=accepted_jobs,
                 failures=failures[-24:],
+                target_jobs=target_jobs,
+                min_candidates=min_candidates,
             )
         )
 
@@ -1215,6 +1241,8 @@ def run_pipeline(
                 str(issues),
                 "--issue-id",
                 run_date,
+                "--page-count",
+                str(resolved_page_count),
             ],
             cwd=project_root,
         )
@@ -1228,6 +1256,7 @@ def run_pipeline(
         "jobs": len(accepted_jobs),
         "candidates": len(candidate_records),
         "publish_target": publish_target,
+        "page_count": resolved_page_count,
     }
     if publish_target == "feishu":
         result["feishu"] = sync_feishu(project_root, issue_jobs(project_root, run_date))
@@ -1240,6 +1269,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--date", default=local_date())
     parser.add_argument("--project-root", type=Path, default=ROOT)
     parser.add_argument("--job-picks-root", type=Path, default=ROOT / "job-picks")
+    parser.add_argument("--count", type=int, default=TARGET_JOBS)
+    parser.add_argument("--page-count", type=int, default=PAGE_JOB_LIMIT)
     return parser.parse_args()
 
 
@@ -1247,7 +1278,12 @@ def main() -> int:
     args = parse_args()
     try:
         result = run_pipeline(
-            args.project_root.resolve(), args.job_picks_root.resolve(), args.date, args.publish_target
+            args.project_root.resolve(),
+            args.job_picks_root.resolve(),
+            args.date,
+            args.publish_target,
+            args.count,
+            args.page_count,
         )
     except (PipelineError, OSError) as exc:
         print(f"daily-job-picks failed: {exc}", file=sys.stderr)
